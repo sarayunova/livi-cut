@@ -9,7 +9,9 @@ use serde_json::json;
 
 use crate::Session;
 use crate::media_test_util::{frame_rgba, make_movie, psnr, session_with, tmp_dir};
-use crate::relink::{apply_remap, derive_remap, index_folder};
+#[cfg(unix)]
+use crate::relink::index_folder;
+use crate::relink::{apply_remap, derive_remap};
 
 const W: u32 = 160;
 const H: u32 = 90;
