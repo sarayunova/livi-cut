@@ -442,15 +442,18 @@ fn offline_badges_proxy_toggle_and_dialogs() {
     d.snapshot("media-create-proxies");
     d.click("proxies.preset.prores_proxy_quarter");
     d.click("proxies.ok");
-    for _ in 0..400 {
+    // The transcode runs on a background thread: wait for the job to be applied by wall clock, not
+    // a frame count, so a loaded machine (the whole suite in parallel) only makes it slower.
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(120);
+    while !d.app().session.media_jobs.is_empty() && std::time::Instant::now() < deadline {
         d.frames(1);
-        let attached = d.app().session.project.items.values().filter(|i| i.as_media().is_some_and(|m| m.proxy.is_some())).count();
-        if attached == 2 {
-            break;
-        }
         std::thread::sleep(std::time::Duration::from_millis(20));
     }
-    assert_eq!(d.app().session.project.items.values().filter(|i| i.as_media().is_some_and(|m| m.proxy.is_some())).count(), 2, "proxies attached");
+    d.frames(1);
+    let attached = d.app().session.project.items.values().filter(|i| i.as_media().is_some_and(|m| m.proxy.is_some())).count();
+    let jobs: Vec<String> = d.app().session.jobs.iter().map(|j| j.progress.status.lock().unwrap().clone()).collect();
+    let log: Vec<String> = d.app().session.log.entries.iter().map(|e| e.message.clone()).collect();
+    assert_eq!(attached, 2, "proxies attached; jobs {jobs:?}, log {log:?}");
     d.click("program.transport.media.toggleProxies");
     assert!(d.app().session.prefs.media.enable_proxies);
     assert_eq!(d.ids("project.item.").into_iter().filter(|i| i.ends_with(".proxy")).count(), 2, "proxy badges");
