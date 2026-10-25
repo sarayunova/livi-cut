@@ -34,7 +34,7 @@ licence covers the artwork, not the LiVi names.
 | `filmcraft-1024.png` | 1024 px render |
 | `filmcraft-macos-512.png` | runtime Dock icon on macOS (embedded by `apps/filmcraft/src/main.rs`) |
 | `filmcraft.icns` | macOS bundle icon (`CFBundleIconFile`) |
-| `filmcraft.ico` | Windows icon, 16–256 px (embedded in `filmcraft.exe` by `apps/filmcraft/build.rs`) |
+| `filmcraft.ico` | Windows icon, 16–256 px (embedded in `livi-cut.exe` by `apps/filmcraft/build.rs`) |
 | `hicolor/<size>/apps/com.liviverse.livicut.png`, `hicolor/scalable/…svg` | Linux icon theme, used by `packaging/linux/com.liviverse.livicut.desktop` |
 
 The web app's `apps/filmcraft-web/web/favicon.png` (128 px) comes from the same artwork.
