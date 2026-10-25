@@ -28,23 +28,17 @@ fn is_file_media(item: &filmcraft_project::ProjectItem) -> bool {
 
 /// Write embedded audio without replacing an occupied path; return the path used.
 fn write_embedded_audio(s: &Session, path: &str, wav: &[u8]) -> Result<String> {
-    let original = Path::new(path);
-    let stem = original.file_stem().ok_or_else(|| EngineError::Other(format!("{path}: missing audio file name")))?;
+    // Only the file name changes: the directory part is kept as written, so a virtual `/files/...`
+    // path keeps its `/` on Windows (`Path::with_file_name` would join with `\`).
+    let dir_len = path.rfind(['/', '\\']).map_or(0, |i| i + 1);
+    let (dir, file) = path.split_at(dir_len);
+    let file = Path::new(file);
+    let stem = file.file_stem().ok_or_else(|| EngineError::Other(format!("{path}: missing audio file name")))?.to_string_lossy();
+    let extension = file.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
     for number in 1..=1_000 {
-        let candidate = if number == 1 {
-            original.to_path_buf()
-        } else {
-            let mut name = stem.to_os_string();
-            name.push(format!(" ({number})"));
-            if let Some(extension) = original.extension() {
-                name.push(".");
-                name.push(extension);
-            }
-            original.with_file_name(name)
-        };
-        let candidate_text = candidate.to_string_lossy();
+        let candidate_text = if number == 1 { path.to_owned() } else { format!("{dir}{stem} ({number}){extension}") };
         match s.services.write_file_new(&candidate_text, wav) {
-            Ok(()) => return Ok(candidate_text.into_owned()),
+            Ok(()) => return Ok(candidate_text),
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
             Err(e) => return Err(EngineError::Other(format!("{candidate_text}: {e}"))),
         }
@@ -231,5 +225,15 @@ mod embedded_audio_tests {
         assert_eq!(stored["/files/cut Audio.wav"], b"first");
         assert_eq!(stored["/files/cut Audio (2).wav"], b"second");
         assert_eq!(stored["/files/cut Audio (3).wav"], b"new audio");
+    }
+
+    #[test]
+    fn extraction_keeps_backslash_separators() {
+        let files = Arc::new(VirtualFiles::default());
+        files.0.lock().unwrap().insert(r"C:\media\cut Audio.wav".into(), b"first".to_vec());
+        let session = Session::new(files.clone());
+        let path = write_embedded_audio(&session, r"C:\media\cut Audio.wav", b"new audio").unwrap();
+        assert_eq!(path, r"C:\media\cut Audio (2).wav");
+        assert_eq!(files.0.lock().unwrap()[r"C:\media\cut Audio (2).wav"], b"new audio");
     }
 }
