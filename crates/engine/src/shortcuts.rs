@@ -56,11 +56,18 @@ pub const PANELS: &[&str] = &[
     "Lumetri Color",
 ];
 
-pub const DEFAULT_PRESET: &str = "FilmCraft Default";
+pub const DEFAULT_PRESET: &str = "LiVi Cut Default";
+/// [`DEFAULT_PRESET`]'s name in FilmCraft (and its preset files), read as [`DEFAULT_PRESET`].
+pub const FILMCRAFT_DEFAULT_PRESET: &str = "FilmCraft Default";
 pub const PREMIERE_PRESET: &str = "Premiere Pro Compatible";
 pub const FCP_PRESET: &str = "Final Cut Pro Compatible";
 pub const AVID_PRESET: &str = "Avid Media Composer Compatible";
 pub const BUILTIN_PRESETS: [&str; 4] = [DEFAULT_PRESET, PREMIERE_PRESET, FCP_PRESET, AVID_PRESET];
+
+/// A preset name as this build calls it: FilmCraft's name for the default preset becomes ours.
+pub fn canonical_preset(name: &str) -> &str {
+    if name == FILMCRAFT_DEFAULT_PRESET { DEFAULT_PRESET } else { name }
+}
 
 const FILE_FORMAT: &str = "filmcraft-keyboard-shortcuts";
 const DIR_NAME: &str = "Keyboard Shortcuts";
@@ -615,7 +622,7 @@ impl Shortcuts {
     pub(crate) fn builtin_for(&self, name: &str, p: Platform) -> Option<Vec<Binding>> {
         let mut b = self.base_defaults();
         b.extend(self.audit_for(p));
-        let table: Vec<Entry> = match name {
+        let table: Vec<Entry> = match canonical_preset(name) {
             DEFAULT_PRESET => Vec::new(),
             PREMIERE_PRESET => presets::premiere(),
             FCP_PRESET => presets::FINAL_CUT.to_vec(),
@@ -654,7 +661,7 @@ impl Shortcuts {
             .flatten()
             .filter(|e| e.file_name() != ACTIVE_FILE)
             .filter_map(|e| std::fs::read(e.path()).ok().and_then(|b| serde_json::from_slice::<PresetFile>(&b).ok()).map(|p| p.name))
-            .filter(|n| !BUILTIN_PRESETS.contains(&n.as_str()))
+            .filter(|n| !BUILTIN_PRESETS.contains(&canonical_preset(n)))
             .collect();
         v.sort();
         v.dedup();
@@ -673,7 +680,7 @@ impl Shortcuts {
         let Ok(bytes) = std::fs::read(&path) else { return };
         match serde_json::from_slice::<PresetFile>(&bytes) {
             Ok(f) => {
-                self.preset = f.name.clone();
+                self.preset = canonical_preset(&f.name).into();
                 if !f.modified
                     && let Some(b) = self.builtin(&f.name)
                 {
@@ -853,7 +860,7 @@ impl Shortcuts {
         };
         let before = self.snapshot();
         self.bindings = bindings;
-        self.preset = name.into();
+        self.preset = canonical_preset(name).into();
         self.modified = false;
         self.changed(before);
         Ok(())
@@ -864,7 +871,7 @@ impl Shortcuts {
         if name.is_empty() {
             return Err("a preset needs a name".into());
         }
-        if BUILTIN_PRESETS.iter().any(|b| b.eq_ignore_ascii_case(name)) {
+        if BUILTIN_PRESETS.iter().chain([&FILMCRAFT_DEFAULT_PRESET]).any(|b| b.eq_ignore_ascii_case(name)) {
             return Err(format!("`{name}` is a built-in preset; choose another name"));
         }
         let path = self.preset_path(name).ok_or("no data directory for custom presets")?;
@@ -877,7 +884,7 @@ impl Shortcuts {
     }
 
     pub fn delete_preset(&mut self, name: &str) -> std::result::Result<(), String> {
-        if BUILTIN_PRESETS.contains(&name) {
+        if BUILTIN_PRESETS.contains(&canonical_preset(name)) {
             return Err("built-in presets cannot be deleted".into());
         }
         let path = self.preset_path(name).ok_or("no data directory for custom presets")?;
@@ -898,7 +905,7 @@ impl Shortcuts {
     /// when `activate`, made the active set.
     pub fn import(&mut self, path: &Path, activate: bool) -> std::result::Result<String, String> {
         let f = read_file(path)?;
-        let name = if f.name.trim().is_empty() || BUILTIN_PRESETS.contains(&f.name.as_str()) {
+        let name = if f.name.trim().is_empty() || BUILTIN_PRESETS.contains(&canonical_preset(&f.name)) {
             path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "Imported".into())
         } else {
             f.name.clone()
@@ -1075,7 +1082,7 @@ fn read_file(path: &Path) -> std::result::Result<PresetFile, String> {
     let bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
     let f: PresetFile = serde_json::from_slice(&bytes).map_err(|e| format!("{}: {e}", path.display()))?;
     if f.format != FILE_FORMAT {
-        return Err(format!("{}: not a FilmCraft keyboard shortcuts file", path.display()));
+        return Err(format!("{}: not a LiVi Cut keyboard shortcuts file", path.display()));
     }
     Ok(f)
 }

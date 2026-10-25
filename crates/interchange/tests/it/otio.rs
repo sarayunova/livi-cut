@@ -1,5 +1,5 @@
 //! OpenTimelineIO: a hand-written plain OTIO document (from the public OTIO schema docs) with gaps,
-//! transitions, markers and legacy `Clip.1`; lossless round trips through `metadata.filmcraft`.
+//! transitions, markers and legacy `Clip.1`; lossless round trips through `metadata.livicut` (and FilmCraft's `metadata.filmcraft`).
 
 use crate::support;
 
@@ -203,7 +203,7 @@ fn project() -> (Project, filmcraft_project::ItemId) {
 }
 
 #[test]
-fn lossless_roundtrip_with_filmcraft_metadata() {
+fn lossless_roundtrip_with_livicut_metadata() {
     let (p, s) = project();
     let (imp, text, rep) = roundtrip(&p, s, Format::Otio, &ExportOptions::default());
     assert!(!rep.has_warnings(), "{rep}");
@@ -250,6 +250,26 @@ fn lossless_roundtrip_with_filmcraft_metadata() {
     assert!(t.contains("\"target_url\": \"../a.mov\""), "{t}");
     let (imp2, _) = import(&bytes, Format::Otio, Some("/m/otio")).unwrap();
     assert_eq!(structure(&imp2.project, imp2.sequences[0], TrackKind::Video), structure(&p, s, TrackKind::Video));
+}
+
+/// Files written by FilmCraft keep our data under `metadata.filmcraft`; they import as losslessly.
+#[test]
+fn filmcraft_metadata_namespace_still_imports() {
+    let (p, s) = project();
+    let (bytes, _) = filmcraft_interchange::export(&p, s, Format::Otio, &ExportOptions::default()).unwrap();
+    let ours = String::from_utf8(bytes).unwrap();
+    assert!(ours.contains("\"livicut\": {") && !ours.contains("\"filmcraft\""), "{ours}");
+    let legacy = ours.replace("\"livicut\":", "\"filmcraft\":");
+    let (imp, rep) = import(legacy.as_bytes(), Format::Otio, None).unwrap();
+    assert!(!rep.has_warnings(), "{rep}");
+    let si = only_seq(&imp);
+    let (qs, ps) = (imp.project.sequence(si).unwrap(), p.sequence(s).unwrap());
+    for kind in [TrackKind::Video, TrackKind::Audio] {
+        assert_eq!(structure(&imp.project, si, kind), structure(&p, s, kind));
+    }
+    assert_eq!(qs.settings, ps.settings);
+    assert_eq!(qs.video_tracks[0].items[0].label, Label::Teal);
+    assert_eq!(qs.video_tracks[0].transitions[0].effect.effect, "iris_round");
 }
 
 #[test]

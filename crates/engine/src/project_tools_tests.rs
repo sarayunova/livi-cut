@@ -315,7 +315,7 @@ fn media_properties_settings_and_scratch_disks() {
     // Scratch Disks: previews follow the Video Previews folder once the project is saved
     let proj = dir.join("Show.fcproj").to_string_lossy().to_string();
     s.execute("file.saveAs", json!({"path": proj})).unwrap();
-    assert_eq!(crate::project_tools::previews_dir(&s).unwrap(), dir.join("FilmCraft Previews").join("Show"));
+    assert_eq!(crate::project_tools::previews_dir(&s).unwrap(), dir.join("LiVi Cut Previews").join("Show"));
     let scratch = dir.join("scratch").to_string_lossy().to_string();
     let r = s.execute("file.projectSettings.scratchDisks", json!({"videoPreviews": scratch, "autoSave": scratch})).unwrap();
     assert_eq!(crate::project_tools::previews_dir(&s).unwrap(), dir.join("scratch").join("Show"));
@@ -399,6 +399,12 @@ fn edit_original_update_metadata_and_clip_items() {
     let x = std::fs::read_to_string(&side).unwrap();
     assert!(x.contains("<xmpDM:scene>12A</xmpDM:scene>") && x.contains("<xmpDM:logComment>best &lt;take&gt;</xmpDM:logComment>"), "{x}");
     assert!(x.contains("<rdf:li xml:lang=\"x-default\">take.mp4</rdf:li>"));
+    assert!(x.contains("xmp:CreatorTool=\"LiVi Cut\""), "{x}");
+    // a sidecar FilmCraft wrote counts as ours and is updated
+    std::fs::write(&side, "<x:xmpmeta><rdf:Description xmp:CreatorTool=\"FilmCraft\"/></x:xmpmeta>").unwrap();
+    let r = s.execute("clip.updateMetadata", json!({})).unwrap();
+    assert_eq!(r["written"].as_array().map(Vec::len), Some(1), "{r}");
+    assert!(std::fs::read_to_string(&side).unwrap().contains("<xmpDM:scene>12A</xmpDM:scene>"));
     // a sidecar from another application is left alone
     std::fs::write(&side, "<x:xmpmeta>someone else's</x:xmpmeta>").unwrap();
     let r = s.execute("clip.updateMetadata", json!({})).unwrap();

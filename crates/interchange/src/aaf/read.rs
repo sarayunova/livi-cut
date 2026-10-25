@@ -56,6 +56,13 @@ fn tagged_values(o: &Obj, p: u16) -> Vec<(String, String)> {
         .collect()
 }
 
+/// The value of our tag `name` ("Frame Size", "Effect", …): written as `LiVi Cut <name>`, and read
+/// as `FilmCraft <name>` too, for files FilmCraft wrote.
+fn our_tag(tags: &[(String, String)], name: &str) -> Option<String> {
+    let find = |prefix: &str| tags.iter().find(|(k, _)| k.strip_prefix(prefix).and_then(|r| r.strip_prefix(' ')) == Some(name)).map(|(_, v)| v.clone());
+    find("LiVi Cut").or_else(|| find("FilmCraft"))
+}
+
 fn indirect_f64(d: &[u8]) -> Option<f64> {
     let (_, v) = indirect(d)?;
     match v.len() {
@@ -154,11 +161,10 @@ impl R<'_> {
             .unwrap_or((25, 1));
         let rate = FrameRate::new(pic_rate.0, pic_rate.1);
         let tags = tagged_values(c, pid::MOB_USER_COMMENTS);
-        let tag = |n: &str| tags.iter().find(|(k, _)| k == n).map(|(_, v)| v.clone());
-        let (mut width, mut height) = tag("FilmCraft Frame Size")
+        let (mut width, mut height) = our_tag(&tags, "Frame Size")
             .and_then(|s| s.split_once('x').and_then(|(a, b)| Some((a.trim().parse().ok()?, b.trim().parse().ok()?))))
             .unwrap_or((0, 0));
-        let mut sample_rate = tag("FilmCraft Audio Sample Rate").and_then(|s| s.parse().ok()).unwrap_or(0u32);
+        let mut sample_rate = our_tag(&tags, "Audio Sample Rate").and_then(|s| s.parse().ok()).unwrap_or(0u32);
         let mut comp =
             Composition { name, rate, sample_rate: 48_000, width: 1920, height: 1080, start_tc: 0, drop: false, tracks: Vec::new(), markers: Vec::new() };
         let (mut nv, mut na) = (0, 0);
@@ -272,17 +278,15 @@ impl R<'_> {
             x if x == cls::TRANSITION => {
                 let cut = units_to_ticks(c.i64(pid::CUT_POINT).unwrap_or(0), rate.0, rate.1);
                 let og = c.strong(pid::OPERATION_GROUP);
-                let effect = og
-                    .and_then(|o| tagged_values(o, pid::COMPONENT_USER_COMMENTS).into_iter().find(|(k, _)| k == "FilmCraft Effect").map(|(_, v)| v))
-                    .unwrap_or_else(|| {
-                        let op = og.and_then(|o| o.weak_key(pid::OPERATION)).and_then(|k| <Auid>::try_from(k).ok());
-                        match (kind, op) {
-                            (CKind::Sound, _) => "constant_power".into(),
-                            (_, Some(o)) if o == def::VIDEO_FADE_TO_BLACK => "dip_to_black".into(),
-                            (_, Some(o)) if o == def::SMPTE_VIDEO_WIPE => "wipe".into(),
-                            _ => "cross_dissolve".into(),
-                        }
-                    });
+                let effect = og.and_then(|o| our_tag(&tagged_values(o, pid::COMPONENT_USER_COMMENTS), "Effect")).unwrap_or_else(|| {
+                    let op = og.and_then(|o| o.weak_key(pid::OPERATION)).and_then(|k| <Auid>::try_from(k).ok());
+                    match (kind, op) {
+                        (CKind::Sound, _) => "constant_power".into(),
+                        (_, Some(o)) if o == def::VIDEO_FADE_TO_BLACK => "dip_to_black".into(),
+                        (_, Some(o)) if o == def::SMPTE_VIDEO_WIPE => "wipe".into(),
+                        _ => "cross_dissolve".into(),
+                    }
+                });
                 vec![CItem::Transition(CTransition { len, cut: cut.clamp(Tick::ZERO, len), effect })]
             }
             x if x == cls::OPERATION_GROUP => {
@@ -690,4 +694,22 @@ fn markers_of(seg: &Obj, rate: (i64, i64)) -> Vec<CMarker> {
 
 fn hex(b: &[u8]) -> String {
     b.iter().map(|x| format!("{x:02x}")).collect()
+}
+
+#[cfg(test)]
+mod our_tag_tests {
+    use super::our_tag;
+
+    fn tags(v: &[(&str, &str)]) -> Vec<(String, String)> {
+        v.iter().map(|(k, x)| (k.to_string(), x.to_string())).collect()
+    }
+
+    #[test]
+    fn reads_ours_then_filmcraft_tags() {
+        assert_eq!(our_tag(&tags(&[("LiVi Cut Frame Size", "1920x1080")]), "Frame Size").as_deref(), Some("1920x1080"));
+        assert_eq!(our_tag(&tags(&[("FilmCraft Frame Size", "1280x720")]), "Frame Size").as_deref(), Some("1280x720"));
+        let both = tags(&[("FilmCraft Effect", "old"), ("LiVi Cut Effect", "iris_round")]);
+        assert_eq!(our_tag(&both, "Effect").as_deref(), Some("iris_round"));
+        assert_eq!(our_tag(&tags(&[("LiVi CutEffect", "x"), ("Other Effect", "y")]), "Effect"), None);
+    }
 }

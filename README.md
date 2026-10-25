@@ -192,7 +192,7 @@ Move timelines between LiVi Cut and every other editor:
 
 - **FCP 7 XML (xmeml):** industry-standard timeline interchange format. It carries nested sequences, transitions, generators, Motion, Opacity, Time Remap and audio levels, with keyframes.
 - **FCPXML 1.9–1.11:** the spine, connected clips as lanes, transitions, retiming and compound clips.
-- **OpenTimelineIO:** the open interchange format of the film industry, round-tripping every LiVi Cut detail through `metadata.filmcraft`.
+- **OpenTimelineIO:** the open interchange format of the film industry, round-tripping every LiVi Cut detail through `metadata.livicut`.
 - **CMX 3600 EDL:** the oldest format still in use, with drop-frame timecode, dissolves, wipes, speed changes (`M2`) and one EDL per track.
 - **AAF (Edit Protocol):** standard timeline and audio interchange format. Video and audio tracks, dissolves and dips, clip volume with keyframes, markers and source timecode; audio embedded or as separate WAV / AIFF files, trimmed with handles, with clip effects rendered in and broken out to mono, plus an optional video mixdown. Import reads AAF back, extracting embedded audio.
 - **OMF 2.0:** the audio-post handoff: the audio tracks with crossfades and gain, sample-accurate, with the audio encapsulated or alongside.
@@ -329,7 +329,7 @@ A PC whose GPUs were installed from different driver packages of one vendor (a l
 integrated and a discrete AMD GPU, for example) can list one GPU twice, once through each installed
 version of the Vulkan driver, and a window drawn through the stale one crashes inside the driver
 (`amdvlk64.dll`, exit code `0xc0000005`). LiVi Cut draws with the newer one and says so in
-`%APPDATA%\FilmCraft\Logs\filmcraft.log`; installing one driver package for every GPU removes the
+`%APPDATA%\LiVi Cut\Logs\filmcraft.log`; installing one driver package for every GPU removes the
 duplicate. With one driver per GPU the adapter is the one wgpu picks, as before.
 
 ### macOS

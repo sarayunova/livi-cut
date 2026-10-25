@@ -70,10 +70,10 @@ pub const OLDEST_SCHEMA: u32 = 1;
 
 #[derive(Debug, thiserror::Error)]
 pub enum FormatError {
-    #[error("not a FilmCraft project: {0}")]
+    #[error("not a LiVi Cut project: {0}")]
     NotAProject(String),
     #[error(
-        "this project was saved by a newer version of FilmCraft (project schema v{found}); this build reads up to v{supported}. Update FilmCraft to open it."
+        "this project was saved by a newer version of LiVi Cut (project schema v{found}); this build reads up to v{supported}. Update LiVi Cut to open it."
     )]
     TooNew { found: u32, supported: u32 },
     #[error("project schema v{found} is too old for this build (oldest supported: v{oldest})")]
@@ -106,7 +106,7 @@ impl Loaded {
 
 /// Writer identification stored in the envelope.
 pub fn generator() -> String {
-    format!("FilmCraft {}", env!("CARGO_PKG_VERSION"))
+    format!("LiVi Cut {}", env!("CARGO_PKG_VERSION"))
 }
 
 #[derive(Serialize)]
@@ -298,7 +298,7 @@ fn v1_to_v2(doc: Value) -> Result<Value, String> {
     Ok(serde_json::json!({
         "format": FORMAT_ID,
         "schema_version": 2,
-        "generator": "FilmCraft (schema v1)",
+        "generator": "LiVi Cut (schema v1)",
         "project": Value::Object(project),
     }))
 }
@@ -513,7 +513,7 @@ mod tests {
         v["schema_version"] = Value::from(SCHEMA_VERSION + 1);
         let e = decode(&serde_json::to_vec(&v).unwrap()).unwrap_err();
         assert!(matches!(e, FormatError::TooNew { .. }));
-        assert!(e.to_string().contains("newer version of FilmCraft"), "{e}");
+        assert!(e.to_string().contains("newer version of LiVi Cut"), "{e}");
     }
 
     #[test]

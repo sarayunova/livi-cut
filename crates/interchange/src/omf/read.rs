@@ -99,6 +99,11 @@ impl R<'_, '_> {
     fn string(&self, o: u32, p: &str) -> Option<String> {
         self.c.get(o, p).map(|v| String::from_utf8_lossy(&v).trim_end_matches('\0').to_string())
     }
+    /// Our property `prop` ("SCLP:ClipName", …): written as `LiViCut:<prop>`, and read as
+    /// `FilmCraft:<prop>` too, for files FilmCraft wrote.
+    fn ours(&self, o: u32, prop: &str) -> Option<String> {
+        self.string(o, &format!("LiViCut:{prop}")).or_else(|| self.string(o, &format!("FilmCraft:{prop}")))
+    }
     fn uid(&self, o: u32, p: &str) -> Option<Uid> {
         self.c.get(o, p).and_then(|v| v.get(..12).and_then(|b| b.try_into().ok()))
     }
@@ -221,8 +226,7 @@ impl R<'_, '_> {
             b"SCLP" => vec![self.clip(seg, rate)],
             b"TRAN" => {
                 let cut = units_to_ticks(self.i32(seg, "OMFI:TRAN:CutPoint").unwrap_or(0), rate.0, rate.1);
-                let effect =
-                    self.r#ref(seg, "OMFI:TRAN:Effect").and_then(|e| self.string(e, "FilmCraft:EFFE:EffectID")).unwrap_or_else(|| "constant_power".into());
+                let effect = self.r#ref(seg, "OMFI:TRAN:Effect").and_then(|e| self.ours(e, "EFFE:EffectID")).unwrap_or_else(|| "constant_power".into());
                 vec![CItem::Transition(CTransition { len, cut: cut.clamp(Tick::ZERO, len), effect })]
             }
             b"EFFE" => {
@@ -279,7 +283,7 @@ impl R<'_, '_> {
     fn clip(&mut self, c: u32, rate: (i64, i64)) -> CItem {
         let len = units_to_ticks(self.len(c), rate.0, rate.1);
         let start = units_to_ticks(self.i32(c, "OMFI:SCLP:StartTime").unwrap_or(0), rate.0, rate.1);
-        let name = self.string(c, "FilmCraft:SCLP:ClipName").unwrap_or_default();
+        let name = self.ours(c, "SCLP:ClipName").unwrap_or_default();
         let (Some(id), Some(track)) = (self.uid(c, "OMFI:SCLP:SourceID"), self.u32(c, "OMFI:SCLP:SourceTrackID")) else { return CItem::Filler(len) };
         if id == [0; 12] {
             return CItem::Filler(len);

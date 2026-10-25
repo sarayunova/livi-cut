@@ -1132,9 +1132,29 @@ pub(crate) fn bounded_time_range(start: Tick, duration: Tick) -> bool {
     within(start.0) && within(duration.0) && start.0.checked_add(duration.0).is_some_and(within)
 }
 
+/// The GPU renderer's name in [`ProjectSettings::renderer`].
+pub const RENDERER_GPU: &str = "LiVi Cut GPU Acceleration (wgpu)";
+/// The CPU renderer's name in [`ProjectSettings::renderer`].
+pub const RENDERER_SOFTWARE: &str = "LiVi Cut Software Only (CPU)";
+
+/// A stored renderer name as this build calls it: projects saved by FilmCraft name the same
+/// renderers "FilmCraft …".
+pub fn canonical_renderer(name: &str) -> String {
+    match name {
+        "FilmCraft GPU Acceleration (wgpu)" => RENDERER_GPU.into(),
+        "FilmCraft Software Only (CPU)" => RENDERER_SOFTWARE.into(),
+        other => other.into(),
+    }
+}
+
+fn renderer_compat<'de, D: serde::Deserializer<'de>>(d: D) -> Result<String, D::Error> {
+    String::deserialize(d).map(|s| canonical_renderer(&s))
+}
+
 /// Project-level settings.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProjectSettings {
+    #[serde(deserialize_with = "renderer_compat")]
     pub renderer: String,
     pub video_display: filmcraft_time::TimeDisplay,
     pub audio_display_samples: bool,
@@ -1214,7 +1234,7 @@ pub enum IngestAction {
 impl Default for ProjectSettings {
     fn default() -> Self {
         Self {
-            renderer: "FilmCraft GPU Acceleration (wgpu)".into(),
+            renderer: RENDERER_GPU.into(),
             video_display: filmcraft_time::TimeDisplay::Timecode,
             audio_display_samples: true,
             default_still_duration: Tick(5 * TICKS_PER_SECOND),
@@ -1880,6 +1900,17 @@ fn has_auto_point(e: &EffectInstance) -> bool {
 mod tests {
     use super::*;
     use filmcraft_media::{DemoScene, MediaSource};
+
+    #[test]
+    fn filmcraft_renderer_names_load_as_ours() {
+        let mut v = serde_json::to_value(ProjectSettings::default()).unwrap();
+        assert_eq!(v["renderer"], RENDERER_GPU);
+        for (old, new) in [("FilmCraft GPU Acceleration (wgpu)", RENDERER_GPU), ("FilmCraft Software Only (CPU)", RENDERER_SOFTWARE), ("Other", "Other")] {
+            v["renderer"] = old.into();
+            let st: ProjectSettings = serde_json::from_value(v.clone()).unwrap();
+            assert_eq!(st.renderer, new);
+        }
+    }
 
     fn demo_project() -> (Project, ItemId, ItemId) {
         let mut p = Project::new("Test");
