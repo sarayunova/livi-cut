@@ -112,7 +112,7 @@ impl Mcp {
         let mut m = Mcp { child, stdin, stdout, next_id: 1 };
         let init =
             m.request("initialize", json!({"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "workflow-tests", "version": "1"}}));
-        assert_eq!(init["result"]["serverInfo"]["name"], "filmcraft", "{init}");
+        assert_eq!(init["result"]["serverInfo"]["name"], "livi-cut", "{init}");
         m.send(&json!({"jsonrpc": "2.0", "method": "notifications/initialized"}));
         m
     }
