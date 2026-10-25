@@ -1,7 +1,7 @@
 # Hosting FilmCraft for the web
 
-`filmcraft-web-<version>.zip` (from the GitHub release, or `packaging/web/package.sh`) holds a
-static site in `filmcraft-web-<version>/`:
+`livi-cut-web-<version>.zip` (from the GitHub release, or `packaging/web/package.sh`) holds a
+static site in `livi-cut-web-<version>/`:
 
 | File | What it is |
 |---|---|

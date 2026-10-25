@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Build and package FilmCraft for FreeBSD:
 #
-#   $DIST/filmcraft-<version>-freebsd-x86_64.tar.gz   a /usr/local-style tree:
-#       filmcraft-<version>-freebsd-x86_64/{bin, share/applications, share/icons, share/mime,
+#   $DIST/livi-cut-<version>-freebsd-x86_64.tar.gz   a /usr/local-style tree:
+#       livi-cut-<version>-freebsd-x86_64/{bin, share/applications, share/icons, share/mime,
 #       share/metainfo, share/doc/filmcraft}
 #
 # Install by copying the tree's contents into /usr/local:
-#   tar -xzf filmcraft-<version>-freebsd-x86_64.tar.gz --strip-components 1 -C /usr/local
+#   tar -xzf livi-cut-<version>-freebsd-x86_64.tar.gz --strip-components 1 -C /usr/local
 #
 # Usage: packaging/freebsd/package.sh [--skip-build] [--dry-run]
 #   --dry-run   stage the tree from stub binaries and list it, without building (works on any OS)
@@ -40,7 +40,7 @@ if [[ "$DRY_RUN" = 0 ]] && [[ "$(uname -s)" != FreeBSD ]]; then
   echo "error: build on FreeBSD (or pass --dry-run to check the tree layout)" >&2
   exit 2
 fi
-BASENAME="filmcraft-$VERSION-freebsd-$ARCH"
+BASENAME="livi-cut-$VERSION-freebsd-$ARCH"
 
 echo "==> FilmCraft $VERSION for FreeBSD $ARCH"
 

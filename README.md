@@ -221,7 +221,7 @@ The trailer and the grades in these screenshots were built exactly this way, by 
 ## Everywhere
 
 - **Native** on macOS, Windows and Linux, with a native macOS menu bar.
-- **The web:** the same engine and UI run in the browser via WebAssembly (`apps/filmcraft-web`, see [docs/web.md](docs/web.md)); every release ships it as `filmcraft-web-<version>.zip`.
+- **The web:** the same engine and UI run in the browser via WebAssembly (`apps/filmcraft-web`, see [docs/web.md](docs/web.md)); every release ships it as `livi-cut-web-<version>.zip`.
 - **Swappable UI.** The interface is one crate (`ui-egui`) over the engine, so a different front end can replace it without touching editing logic.
 
 <br>
@@ -304,9 +304,9 @@ On GitHub, the [latest release](https://github.com/sarayunova/livi-cut/releases/
 
 | Build | Installer | Portable |
 |---|---|---|
-| x64 (64-bit Intel/AMD) | `filmcraft-<ver>-windows-x64.msi` | `filmcraft-<ver>-windows-x64-portable.zip` |
-| arm64 (Snapdragon and other ARM PCs) | `filmcraft-<ver>-windows-arm64.msi` | `filmcraft-<ver>-windows-arm64-portable.zip` |
-| x86 (32-bit) | `filmcraft-<ver>-windows-x86.msi` | `filmcraft-<ver>-windows-x86-portable.zip` |
+| x64 (64-bit Intel/AMD) | `livi-cut-<ver>-windows-x64.msi` | `livi-cut-<ver>-windows-x64-portable.zip` |
+| arm64 (Snapdragon and other ARM PCs) | `livi-cut-<ver>-windows-arm64.msi` | `livi-cut-<ver>-windows-arm64-portable.zip` |
+| x86 (32-bit) | `livi-cut-<ver>-windows-x86.msi` | `livi-cut-<ver>-windows-x86-portable.zip` |
 
 Installers and executables are code-signed.
 
@@ -336,20 +336,20 @@ duplicate. With one driver per GPU the adapter is the one wgpu picks, as before.
 
 | Build | File | Notes |
 |---|---|---|
-| App, universal (Apple silicon + Intel) | `filmcraft-<ver>-macos-universal.dmg` | Signed and notarized |
-| Command-line tool, universal | `filmcraft-cli-<ver>-macos-universal.zip` | Signed and notarized |
+| App, universal (Apple silicon + Intel) | `livi-cut-<ver>-macos-universal.dmg` | Signed and notarized |
+| Command-line tool, universal | `livi-cut-cli-<ver>-macos-universal.zip` | Signed and notarized |
 
 ### Linux
 
 | Format | x86_64 | aarch64 (ARM64) | Notes |
 |---|---|---|---|
-| AppImage | `filmcraft-<ver>-linux-x86_64.AppImage` | `filmcraft-<ver>-linux-aarch64.AppImage` | Runs anywhere; updates itself with [AppImageUpdate](https://github.com/AppImageCommunity/AppImageUpdate) (`.zsync` files) |
-| Flatpak | `filmcraft-<ver>-linux-x86_64.flatpak` | `filmcraft-<ver>-linux-aarch64.flatpak` | Sandboxed; `flatpak install --user <file>` |
-| Debian/Ubuntu | `filmcraft-<ver>-linux-x86_64.deb` | `filmcraft-<ver>-linux-aarch64.deb` | |
-| Fedora/RHEL/openSUSE | `filmcraft-<ver>-linux-x86_64.rpm` | `filmcraft-<ver>-linux-aarch64.rpm` | |
-| Tarball | `filmcraft-<ver>-linux-x86_64.tar.gz` | `filmcraft-<ver>-linux-aarch64.tar.gz` | Unpack and run `./install.sh` |
+| AppImage | `livi-cut-<ver>-linux-x86_64.AppImage` | `livi-cut-<ver>-linux-aarch64.AppImage` | Runs anywhere; updates itself with [AppImageUpdate](https://github.com/AppImageCommunity/AppImageUpdate) (`.zsync` files) |
+| Flatpak | `livi-cut-<ver>-linux-x86_64.flatpak` | `livi-cut-<ver>-linux-aarch64.flatpak` | Sandboxed; `flatpak install --user <file>` |
+| Debian/Ubuntu | `livi-cut-<ver>-linux-x86_64.deb` | `livi-cut-<ver>-linux-aarch64.deb` | |
+| Fedora/RHEL/openSUSE | `livi-cut-<ver>-linux-x86_64.rpm` | `livi-cut-<ver>-linux-aarch64.rpm` | |
+| Tarball | `livi-cut-<ver>-linux-x86_64.tar.gz` | `livi-cut-<ver>-linux-aarch64.tar.gz` | Unpack and run `./install.sh` |
 
-RISC-V (riscv64): `filmcraft-<ver>-linux-riscv64.tar.gz` (tarball only; needs glibc 2.39+, e.g. Ubuntu 24.04
+RISC-V (riscv64): `livi-cut-<ver>-linux-riscv64.tar.gz` (tarball only; needs glibc 2.39+, e.g. Ubuntu 24.04
 or Debian 13).
 
 The tarball installer places LiVi Cut, its command-line tool and desktop integration in
@@ -371,13 +371,13 @@ emerge --ask media-video/filmcraft-bin
 
 | Build | File |
 |---|---|
-| x86_64 | `filmcraft-<ver>-freebsd-x86_64.tar.gz` |
+| x86_64 | `livi-cut-<ver>-freebsd-x86_64.tar.gz` |
 
 ### Web (WebAssembly)
 
 | Build | File | Notes |
 |---|---|---|
-| Static site | `filmcraft-web-<ver>.zip` | Runs in a modern browser; host it on any static server |
+| Static site | `livi-cut-web-<ver>.zip` | Runs in a modern browser; host it on any static server |
 
 ## License and credits
 
