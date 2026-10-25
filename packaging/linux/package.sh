@@ -41,7 +41,7 @@ case "$ARCH" in
   aarch64 | arm64) ARCH=aarch64; DEB_ARCH=arm64 ;;
   *) echo "unsupported architecture $ARCH" >&2; exit 2 ;;
 esac
-export FILMCRAFT_MAINTAINER="${FILMCRAFT_MAINTAINER:-FilmCraft maintainers <filmcraft@storyteller.ai>}"
+export FILMCRAFT_MAINTAINER="${FILMCRAFT_MAINTAINER:-LiVi <319914632+sarayunova@users.noreply.github.com>}"
 BASENAME="livi-cut-$VERSION-linux-$ARCH"
 
 echo "==> FilmCraft $VERSION for Linux $ARCH ($FORMATS)"
