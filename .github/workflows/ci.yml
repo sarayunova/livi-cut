@@ -1,7 +1,8 @@
 name: CI
 
-# Quality gates for every push to main and every pull request (`cargo xtask ci`), through the
-# suite's shared gate workflow in craft-common-actions.
+# Quality gates for every push to main and every pull request: `cargo xtask ci` (fmt, clippy
+# -D warnings, tests, layers, assets, wasm) on Linux, then a check that the gate left Cargo.lock
+# alone. Builds without craft-fonts: everything must build, test and run with CRAFT_FONTS empty.
 on:
   push:
     branches: [main]
@@ -18,13 +19,63 @@ concurrency:
 
 jobs:
   gate:
-    # Tracks @main so suite-wide CI fixes reach every app without a PR in each repository.
-    uses: storytold/craft-common-actions/.github/workflows/gate.yml@main
-    with:
-      # Same craft-fonts commit as release.yml.
-      craft-fonts-ref: abb83316d96aa59c1cf64784289e378fe9fa5695
-      timeout-minutes: 120
-      packages: >-
-        pkg-config libxkbcommon-dev libwayland-dev libx11-dev libxcb1-dev libxcursor-dev
-        libxrandr-dev libxi-dev libfontconfig1-dev libfreetype-dev mesa-vulkan-drivers
-        libasound2-dev
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: 0
+      CARGO_NET_RETRY: 10
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      RUST_BACKTRACE: 1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Nothing waits on it: the space is free before the build needs it.
+      - name: Free disk space
+        run: |
+          nohup sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL </dev/null >/dev/null 2>&1 &
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libxkbcommon-dev libwayland-dev libx11-dev libxcb1-dev libxcursor-dev \
+            libxrandr-dev libxi-dev libfontconfig1-dev libfreetype-dev mesa-vulkan-drivers \
+            libasound2-dev
+
+      # The channel in rust-toolchain.toml (if any) wins, so CI builds with what contributors use.
+      - name: Install Rust
+        run: |
+          set -euo pipefail
+          toolchain=stable
+          if [ -f rust-toolchain.toml ]; then
+            channel=$(sed -n 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' rust-toolchain.toml)
+            toolchain=${channel:-$toolchain}
+          fi
+          rustup toolchain install "$toolchain" --profile minimal --no-self-update \
+            --component clippy --component rustfmt --target wasm32-unknown-unknown
+          rustup default "$toolchain"
+          rustc --version
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: cargo-nextest@0.9.149
+
+      # Only main writes the cache, so PR caches never evict its entry; a failing gate still saves.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          prefix-key: v1-rust
+          key: ${{ hashFiles('Cargo.toml') }}
+          save-if: ${{ github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch }}
+          cache-on-failure: true
+
+      - name: Gate
+        run: cargo xtask ci
+
+      # A gate that changed Cargo.lock ran against a lockfile that is not the one in the repository.
+      - name: Lockfile unchanged
+        run: git diff --exit-code -- Cargo.lock

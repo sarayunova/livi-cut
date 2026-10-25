@@ -18,13 +18,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The only git dependency is FilmCraft's craft-libs (code LiVi Cut builds on); a new git source
+  # must be added here on purpose.
   git-sources:
-    name: Git dependencies come from storytold
+    name: Git dependencies come from known repositories
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Git dependencies come from storytold
+        with:
+          persist-credentials: false
+      - name: Git dependencies come from known repositories
         run: |
           set -euo pipefail
           test -f Cargo.lock || { echo "Cargo.lock is missing"; exit 1; }
@@ -48,14 +52,23 @@ jobs:
           python3 - <<'PY'
           import sys, tomllib
           lock = tomllib.load(open("Cargo.lock", "rb"))
+          known = ("git+https://github.com/storytold/craft-libs", "git+https://github.com/sarayunova/")
           bad = sorted({p["source"] for p in lock.get("package", [])
                         if p.get("source", "").startswith("git+")
-                        and not p["source"].startswith("git+https://github.com/storytold/")})
+                        and not p["source"].startswith(known)})
           if bad:
-              print("Git dependencies outside github.com/storytold:", *bad, sep="\n")
+              print("Git dependencies from unknown repositories:", *bad, sep="\n")
               sys.exit(1)
           PY
 
   nix:
-    # Intentionally tracked at @main (not SHA-pinned) so org-wide CI improvements, security fixes, and build optimizations propagate without PR churn across all craftapp repos.
-    uses: storytold/craft-common-actions/.github/workflows/nix.yml@main
+    name: Flake evaluates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - name: nix flake check (evaluation only)
+        run: nix flake check --no-build --all-systems

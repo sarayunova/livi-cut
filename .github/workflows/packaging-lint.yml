@@ -1,10 +1,10 @@
-# Quick static checks for the release pipeline (seconds, no Rust build): workflow syntax,
-# packaging shell/PowerShell scripts, and the Linux desktop/AppStream/Flatpak metadata.
+# Quick static checks for the packaging (seconds, no Rust build): workflow syntax, packaging
+# shell/PowerShell scripts, and the Linux desktop/AppStream/Flatpak metadata.
 name: Packaging lint
 
 on:
   push:
-    branches: [main, release]
+    branches: [main]
     paths: [".github/workflows/**", "packaging/**", "assets/app-icon/**"]
   pull_request:
     paths: [".github/workflows/**", "packaging/**", "assets/app-icon/**"]
@@ -19,5 +19,70 @@ concurrency:
 
 jobs:
   lint:
-    # Intentionally tracked at @main (not SHA-pinned) so org-wide CI improvements, security fixes, and build optimizations propagate without PR churn across all craftapp repos.
-    uses: storytold/craft-common-actions/.github/workflows/packaging-lint.yml@main
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ACTIONLINT_VERSION: "1.7.12"
+      ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends shellcheck desktop-file-utils appstream libxml2-utils python3-yaml
+          url="https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl --proto '=https' --proto-redir =https -fsSL -o "$RUNNER_TEMP/actionlint.tar.gz" "$url"
+          echo "$ACTIONLINT_SHA256  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
+          tar -xz -C "$RUNNER_TEMP" -f "$RUNNER_TEMP/actionlint.tar.gz" actionlint
+
+      - name: actionlint
+        run: '"$RUNNER_TEMP/actionlint" -color'
+
+      - name: shellcheck
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find packaging -type f -name '*.sh' | sort)
+          if [ -f packaging/linux/AppRun ]; then files+=(packaging/linux/AppRun); fi
+          if [ "${#files[@]}" -gt 0 ]; then shellcheck "${files[@]}"; fi
+
+      - name: Linux tarball installer test
+        run: |
+          if [ -f packaging/linux/test_install.py ]; then python3 packaging/linux/test_install.py; fi
+
+      - name: PowerShell scripts parse
+        shell: pwsh
+        run: |
+          foreach ($f in Get-ChildItem packaging/windows/*.ps1) {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errors) | Out-Null
+            if ($errors) { $errors | ForEach-Object { Write-Output "::error file=$($f.Name)::$_" }; exit 1 }
+            Write-Output "ok $($f.Name)"
+          }
+
+      - name: XML, desktop entry, AppStream, Flatpak manifests
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          xml=(packaging/windows/*.wxs packaging/windows/*.wxl packaging/macos/*.plist* packaging/linux/*.xml*)
+          if [ "${#xml[@]}" -gt 0 ]; then xmllint --noout "${xml[@]}"; fi
+          for df in packaging/linux/*.desktop; do desktop-file-validate "$df"; done
+          for mi in packaging/linux/*.metainfo.xml.in; do
+            out="$RUNNER_TEMP/$(basename "$mi" .in)"
+            sed -e 's/@VERSION@/0.0.0/' -e 's/@DATE@/2026-01-01/' "$mi" > "$out"
+            appstreamcli validate --no-net --explain "$out"
+          done
+          python3 - <<'PY'
+          import glob, yaml
+          src = [f for f in glob.glob("packaging/linux/flatpak/*.yml") if not f.endswith(".bundle.yml")]
+          bundle = glob.glob("packaging/linux/flatpak/*.bundle.yml")
+          if src and bundle:
+              a, b = yaml.safe_load(open(src[0])), yaml.safe_load(open(bundle[0]))
+              for key in ("runtime", "runtime-version", "sdk", "finish-args"):
+                  if key in a and key in b:
+                      assert a[key] == b[key], f"Flatpak manifests disagree on {key}: {a[key]} vs {b[key]}"
+              print("Flatpak manifests ok")
+          PY
