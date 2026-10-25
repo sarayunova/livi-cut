@@ -5,23 +5,21 @@
   <id>com.liviverse.livicut</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT OR Apache-2.0</project_license>
-  <name>FilmCraft</name>
+  <name>LiVi Cut</name>
   <summary>Edit video, color and sound</summary>
   <developer id="ai.storyteller">
     <name>Learning Machines LLC</name>
   </developer>
   <description>
     <p>
-      FilmCraft is a video editor. Edit video, color and sound
+      LiVi Cut is a video editor. Edit video, color and sound
     </p>
   </description>
   <launchable type="desktop-id">com.liviverse.livicut.desktop</launchable>
   <icon type="stock">com.liviverse.livicut</icon>
   <!-- Only url types known to appstream 0.15 (Ubuntu 22.04, where CI validates): no vcs-browser. -->
-  <url type="homepage">https://getartcraft.com/apps/filmcraft</url>
-  <url type="bugtracker">https://github.com/storytold/filmcraft/issues</url>
-  <url type="help">https://github.com/storytold/filmcraft</url>
-  <url type="contact">https://discord.gg/artcraft</url>
+  <url type="homepage">https://github.com/sarayunova/livi-cut</url>
+  <url type="bugtracker">https://github.com/sarayunova/livi-cut/issues</url>
   <categories>
     <category>AudioVideo</category>
     <category>Video</category>
@@ -37,7 +35,7 @@
   <screenshots>
     <screenshot type="default">
       <caption>Color workspace: a documentary cut with Lumetri Color, scopes, captions and loudness meters</caption>
-      <image>https://raw.githubusercontent.com/storytold/filmcraft/main/docs/images/filmcraft-hero.png</image>
+      <image>https://raw.githubusercontent.com/sarayunova/livi-cut/main/docs/images/filmcraft-hero.png</image>
     </screenshot>
   </screenshots>
   <branding>

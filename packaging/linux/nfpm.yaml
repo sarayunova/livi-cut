@@ -3,7 +3,13 @@
 # exports VERSION and NFPM_ARCH.
 #
 #   nfpm package -f packaging/linux/nfpm.yaml -p deb -t dist/release/
-name: filmcraft
+name: livi-cut
+# The binaries keep FilmCraft's names (/usr/bin/filmcraft, filmcraft-cli), so this package cannot
+# be installed next to a filmcraft package: installing one replaces the other.
+conflicts:
+  - filmcraft
+replaces:
+  - filmcraft
 arch: ${NFPM_ARCH}
 platform: linux
 version: ${VERSION}
@@ -14,7 +20,6 @@ section: video
 priority: optional
 maintainer: ${FILMCRAFT_MAINTAINER}
 vendor: Learning Machines LLC
-homepage: https://getartcraft.com/apps/filmcraft
 license: MIT OR Apache-2.0
 description: |-
   Open-source, native video editor: edit video, color and sound.
