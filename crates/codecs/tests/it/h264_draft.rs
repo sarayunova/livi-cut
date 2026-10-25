@@ -10,6 +10,8 @@ use filmcraft_media::cancel::with_draft;
 
 #[test]
 fn draft_playback_never_reaches_exports() {
+    // the GOP statistics are process-wide: not alongside `draft_decoders`
+    let _stats = draft_stats_lock();
     let ff = filmcraft_testkit::require_ffmpeg!();
     // B-pyramid: references and non-reference B pictures (the ones draft mode leaves unfiltered)
     let Some(file) = fixture(

@@ -47,9 +47,11 @@ fn check(name: &str, args: &[&str], w: usize, h: usize) {
     }
 }
 
-/// One test (the GOP cache statistics are process-wide, so the codecs run one after another).
+/// One test (the GOP cache statistics are process-wide, so the codecs run one after another, and
+/// not alongside `h264_draft`).
 #[test]
 fn draft_playback_never_reaches_exports() {
+    let _stats = draft_stats_lock();
     vp9();
     hevc();
     av1();

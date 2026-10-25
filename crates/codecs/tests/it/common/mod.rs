@@ -8,6 +8,13 @@ use std::sync::Arc;
 
 use filmcraft_frame::{PixelData, VideoFrame};
 
+/// Held by every test that reads `filmcraft_codecs::gop_stats()` deltas around draft playback:
+/// the counters are process-wide, so two such tests running at once see each other's frames.
+pub fn draft_stats_lock() -> std::sync::MutexGuard<'static, ()> {
+    static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    LOCK.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
 pub fn dir() -> PathBuf {
     filmcraft_testkit::fixtures_dir("codecs")
 }
