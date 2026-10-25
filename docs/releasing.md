@@ -1,10 +1,14 @@
 # Releasing FilmCraft
 
-> **LiVi Cut has no release workflow yet.** This page describes FilmCraft's pipeline, which runs
-> through storytold's shared workflows and signing secrets; LiVi Cut's CI (`ci.yml`, `nix.yml`,
-> `packaging-lint.yml`) is self-contained and builds nothing for release. The packaging scripts
-> under `packaging/` still work locally, unsigned. A LiVi Cut release workflow needs its own
-> signing certificates (Apple Developer ID, a Windows code-signing certificate) first.
+> **LiVi Cut releases are unsigned for now.** Bump `[workspace.package] version` in `Cargo.toml`,
+> then push a matching tag (`git tag v0.13.0 && git push livi v0.13.0`) or run *Actions › Release ›
+> Run workflow*. `.github/workflows/release.yml` builds macOS (universal DMG, ad-hoc signed, not
+> notarized), Windows x64 and ARM64 (MSI and portable zip, unsigned), Linux x86_64 and aarch64
+> (AppImage, deb, rpm, tar.gz), Flatpak and the web zip, and creates or updates a draft release
+> `LiVi Cut v<version>` with `SHA256SUMS.txt`. FreeBSD, riscv64 and Arch packages are not built.
+> Signing needs an Apple Developer ID and a Windows code-signing certificate; the packaging
+> scripts use them once the secrets below are set. The rest of this page describes FilmCraft's
+> own pipeline.
 
 Every push to the `release` branch runs `.github/workflows/release.yml`. The workflow builds
 installers for macOS, Windows, Linux (AppImage, deb, rpm, tarball, Flatpak) and FreeBSD, plus
