@@ -38,17 +38,17 @@
   <Fragment>
     <ComponentGroup Id="FilmcraftFiles" Directory="INSTALLFOLDER">
       <Component Id="FilmcraftApp" Guid="CE301100-38F2-42C6-B196-B6DFC0389964">
-        <File Id="FilmcraftExe" Source="$(var.BinDir)\filmcraft.exe" KeyPath="yes">
+        <File Id="FilmcraftExe" Source="$(var.BinDir)\livi-cut.exe" KeyPath="yes">
           <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="LiVi Cut"
               Description="LiVi Cut video editor" WorkingDirectory="INSTALLFOLDER" Advertise="yes"
               Icon="FilmcraftIcon.ico" IconIndex="0" />
         </File>
 
-        <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\filmcraft.exe" Value="[#FilmcraftExe]" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\livi-cut.exe" Value="[#FilmcraftExe]" Type="string" />
       </Component>
 
       <Component Id="FilmcraftCli">
-        <File Id="FilmcraftCliExe" Source="$(var.BinDir)\filmcraft-cli.exe" KeyPath="yes" />
+        <File Id="FilmcraftCliExe" Source="$(var.BinDir)\livi-cut-cli.exe" KeyPath="yes" />
       </Component>
     </ComponentGroup>
   </Fragment>

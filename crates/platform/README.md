@@ -7,7 +7,7 @@ It is the one crate of the workspace allowed to contain `unsafe`, under the rule
 [ADR 0001](../../docs/adr/0001-platform-ffi.md) and [AGENTS.md](../../AGENTS.md) §0.3.
 
 ```rust
-// at startup (the desktop app, filmcraft-cli, the bench)
+// at startup (the desktop app, livi-cut-cli, the bench)
 let availability = filmcraft_platform::register(); // Available("VideoToolbox") on macOS, Available("Media Foundation") on Windows, Available("VA-API") on Linux with a driver
 ```
 

@@ -139,7 +139,7 @@ fn search_dirs(user: &std::path::Path) -> Vec<std::path::PathBuf> {
 
 /// Whether the `.desktop` body's `Exec` points at our binary exactly (a stale dev entry from
 /// another checkout — `/a/filmcraft-old` is not `/a/filmcraft` — does not, and is rewritten; a
-/// packaged `Exec=filmcraft` never matches a source-tree path).
+/// packaged `Exec=livi-cut` never matches a source-tree path).
 fn desktop_file_exec_is_ours(body: &str, exe: &str) -> bool {
     exec_line(body).is_some_and(|arg| arg == exe)
 }
@@ -276,11 +276,11 @@ mod tests {
         let expected = packaged
             .lines()
             .filter(|l| !l.starts_with("TryExec="))
-            .map(|l| if l.starts_with("Exec=") { "Exec=\"/target/debug/filmcraft\" %F" } else { l })
+            .map(|l| if l.starts_with("Exec=") { "Exec=\"/target/debug/livi-cut\" %F" } else { l })
             .collect::<Vec<_>>()
             .join("\n")
             + "\n";
-        let body = desktop_file_content("com.liviverse.livicut", "LiVi Cut", "/target/debug/filmcraft");
+        let body = desktop_file_content("com.liviverse.livicut", "LiVi Cut", "/target/debug/livi-cut");
         assert_eq!(body, expected);
     }
 
@@ -299,7 +299,7 @@ mod tests {
     /// A written entry reads back as the exact binary it was written for, through both layers.
     #[test]
     fn exec_round_trips_through_both_layers() {
-        for exe in ["/home/dev/Projects/filmcraft/target/debug/filmcraft", "/opt/film craft/filmcraft", "/a$b\"c`d\\e"] {
+        for exe in ["/home/dev/Projects/filmcraft/target/debug/livi-cut", "/opt/film craft/filmcraft", "/a$b\"c`d\\e"] {
             let body = desktop_file_content("com.liviverse.livicut", "LiVi Cut", exe);
             assert_eq!(exec_line(&body).as_deref(), Some(exe));
             assert!(desktop_file_exec_is_ours(&body, exe));
@@ -307,13 +307,13 @@ mod tests {
     }
 
     /// Only the exact executable counts: another checkout's path, a path with our path as a
-    /// prefix, and a packaged `Exec=filmcraft` are all someone else's entry.
+    /// prefix, and a packaged `Exec=livi-cut` are all someone else's entry.
     #[test]
     fn desktop_file_exec_is_ours_matches_only_our_binary() {
         let body = desktop_file_content("com.liviverse.livicut", "LiVi Cut", "/a/filmcraft");
         assert!(!desktop_file_exec_is_ours(&body, "/a/filmcraft-old"));
         assert!(!desktop_file_exec_is_ours(&body, "/b/filmcraft"));
-        assert!(!desktop_file_exec_is_ours("Exec=filmcraft %F\n", "/a/filmcraft"));
+        assert!(!desktop_file_exec_is_ours("Exec=livi-cut %F\n", "/a/filmcraft"));
         assert!(!desktop_file_exec_is_ours("Name=filmcraft\n", "/a/filmcraft"));
         assert!(!desktop_file_exec_is_ours("Exec=\"dangling\n", "/a/filmcraft"));
     }

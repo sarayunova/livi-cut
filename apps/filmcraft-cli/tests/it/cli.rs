@@ -6,7 +6,7 @@ use std::process::{Command, Output, Stdio};
 use serde_json::{Value, json};
 
 fn cli(args: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_filmcraft-cli")).args(args).output().expect("spawn filmcraft-cli")
+    Command::new(env!("CARGO_BIN_EXE_livi-cut-cli")).args(args).output().expect("spawn livi-cut-cli")
 }
 
 fn json_out(o: &Output) -> Value {
@@ -29,7 +29,7 @@ fn help_and_usage_errors() {
 
 #[test]
 fn version_after_global_options() {
-    let want = format!("filmcraft-cli {}\n", env!("CARGO_PKG_VERSION"));
+    let want = format!("livi-cut-cli {}\n", env!("CARGO_PKG_VERSION"));
     for args in [&["--version"][..], &["-V"], &["version"], &["--demo", "--version"], &["--compact", "-V"], &["--demo", "version"]] {
         let o = cli(args);
         assert!(o.status.success(), "{args:?}: {}", String::from_utf8_lossy(&o.stderr));
@@ -107,7 +107,7 @@ fn exec_save_as_then_reopen() {
     let tree = json_out(&cli(&["--project", p, "inspect", "project"]));
     assert!(tree.to_string().contains("CLI Selects"), "{tree}");
     // `run` from stdin, editing and saving back in place.
-    let mut child = Command::new(env!("CARGO_BIN_EXE_filmcraft-cli"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_livi-cut-cli"))
         .args(["--project", p, "--save", "run", "-"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -124,7 +124,7 @@ fn exec_save_as_then_reopen() {
 
 #[test]
 fn run_keep_going_reports_failures() {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_filmcraft-cli"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_livi-cut-cli"))
         .args(["--demo", "--keep-going", "run", "-"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -158,8 +158,7 @@ fn run_waits_for_an_export_on_its_last_line() {
     let out = dir.join("last.wav");
     // `"wait": null` waits too: only an explicit `false` doesn't
     let script = json!({"id": "file.exportMedia", "params": {"path": out.to_str().unwrap(), "format": "wav", "wait": null}}).to_string();
-    let mut child =
-        Command::new(env!("CARGO_BIN_EXE_filmcraft-cli")).args(["--demo", "run", "-"]).stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().unwrap();
+    let mut child = Command::new(env!("CARGO_BIN_EXE_livi-cut-cli")).args(["--demo", "run", "-"]).stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().unwrap();
     child.stdin.take().unwrap().write_all(format!("{script}\n").as_bytes()).unwrap();
     let o = child.wait_with_output().unwrap();
     assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stdout));
@@ -262,13 +261,13 @@ fn export_with_presets() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
-/// `filmcraft-cli commands | head -c 10` panicked with "failed printing to stdout: Broken pipe
+/// `livi-cut-cli commands | head -c 10` panicked with "failed printing to stdout: Broken pipe
 /// (os error 32)" and exit status 101 (#285).
 #[test]
 fn closed_stdout_ends_quietly() {
     use std::io::Read;
     for args in [&["commands"][..], &["help"], &["--demo", "commands", "--json"]] {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_filmcraft-cli")).args(args).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn().unwrap();
+        let mut child = Command::new(env!("CARGO_BIN_EXE_livi-cut-cli")).args(args).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn().unwrap();
         let mut first = [0u8; 10];
         child.stdout.as_mut().unwrap().read_exact(&mut first).unwrap();
         drop(child.stdout.take());
@@ -283,7 +282,7 @@ fn closed_stdout_ends_quietly() {
 /// still reports a failing command.
 fn run_with_closed_stdout(args: &[&str], script: &[u8]) -> Output {
     let mut child =
-        Command::new(env!("CARGO_BIN_EXE_filmcraft-cli")).args(args).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn().unwrap();
+        Command::new(env!("CARGO_BIN_EXE_livi-cut-cli")).args(args).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn().unwrap();
     drop(child.stdout.take());
     child.stdin.take().unwrap().write_all(script).unwrap();
     child.wait_with_output().unwrap()
@@ -327,7 +326,7 @@ fn render_rejects_bad_numbers() {
         let o = cli(&["--demo", "render", "--seconds", secs, "--scale", scale, "--out", &still]);
         let err = String::from_utf8_lossy(&o.stderr);
         assert_eq!(o.status.code(), Some(2), "{opt} {bad}: {err}");
-        assert!(err.contains("filmcraft-cli:") && err.contains(opt), "{opt} {bad}: {err}");
+        assert!(err.contains("livi-cut-cli:") && err.contains(opt), "{opt} {bad}: {err}");
         assert!(!std::path::Path::new(&still).exists(), "{opt} {bad} wrote a file");
     }
     let _ = std::fs::remove_dir_all(&dir);

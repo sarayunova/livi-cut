@@ -3,7 +3,7 @@
 #
 #   $DIST/livi-cut-<version>-freebsd-x86_64.tar.gz   a /usr/local-style tree:
 #       livi-cut-<version>-freebsd-x86_64/{bin, share/applications, share/icons, share/mime,
-#       share/metainfo, share/doc/filmcraft}
+#       share/metainfo, share/doc/livi-cut}
 #
 # Install by copying the tree's contents into /usr/local:
 #   tar -xzf livi-cut-<version>-freebsd-x86_64.tar.gz --strip-components 1 -C /usr/local
@@ -61,7 +61,7 @@ if [[ "$DRY_RUN" = 1 ]]; then
   BIN="$WORK/stub-bin"
   OUT_DIR="$WORK"
   mkdir -p "$BIN"
-  for b in filmcraft filmcraft-cli; do
+  for b in livi-cut livi-cut-cli; do
     printf '#!/bin/sh\necho "%s %s (dry-run stub)"\n' "$b" "$VERSION" >"$BIN/$b"
     chmod 755 "$BIN/$b"
   done
@@ -70,23 +70,23 @@ fi
 # ---- stage a /usr/local-style tree --------------------------------------------------------------
 # FreeBSD's install(1) has no -D: create the directories first.
 mkdir -p "$STAGE/bin" "$STAGE/share/applications" "$STAGE/share/mime/packages" \
-  "$STAGE/share/metainfo" "$STAGE/share/icons" "$STAGE/share/doc/filmcraft"
-install -m 755 "$BIN/filmcraft" "$BIN/filmcraft-cli" "$STAGE/bin/"
-strip "$STAGE/bin/filmcraft" "$STAGE/bin/filmcraft-cli" 2>/dev/null || true
+  "$STAGE/share/metainfo" "$STAGE/share/icons" "$STAGE/share/doc/livi-cut"
+install -m 755 "$BIN/livi-cut" "$BIN/livi-cut-cli" "$STAGE/bin/"
+strip "$STAGE/bin/livi-cut" "$STAGE/bin/livi-cut-cli" 2>/dev/null || true
 # The desktop entry, MIME type, metainfo and icons are the freedesktop files Linux ships.
 install -m 644 "$LINUX/$APP_ID.desktop" "$STAGE/share/applications/$APP_ID.desktop"
 install -m 644 "$LINUX/$APP_ID.mime.xml" "$STAGE/share/mime/packages/$APP_ID.xml"
 sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$FILMCRAFT_BUILD_DATE/g" \
   "$LINUX/$APP_ID.metainfo.xml.in" >"$STAGE/share/metainfo/$APP_ID.metainfo.xml"
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/share/icons/"
-copy_docs "$STAGE/share/doc/filmcraft"
+copy_docs "$STAGE/share/doc/livi-cut"
 for f in NOTICE ATTRIBUTION.md; do
-  if [[ -f "$ROOT/$f" ]]; then install -m 644 "$ROOT/$f" "$STAGE/share/doc/filmcraft/"; fi
+  if [[ -f "$ROOT/$f" ]]; then install -m 644 "$ROOT/$f" "$STAGE/share/doc/livi-cut/"; fi
 done
 
-for f in bin/filmcraft bin/filmcraft-cli "share/applications/$APP_ID.desktop" \
+for f in bin/livi-cut bin/livi-cut-cli "share/applications/$APP_ID.desktop" \
   "share/icons/hicolor/256x256/apps/$APP_ID.png" "share/icons/hicolor/scalable/apps/$APP_ID.svg" \
-  share/doc/filmcraft/LICENSE-MIT share/doc/filmcraft/LICENSE-APACHE; do
+  share/doc/livi-cut/LICENSE-MIT share/doc/livi-cut/LICENSE-APACHE; do
   if [[ ! -e "$STAGE/$f" ]]; then echo "error: $f is missing from the package" >&2; exit 1; fi
 done
 
@@ -95,7 +95,7 @@ mkdir -p "$OUT_DIR"
 tar -C "$WORK" -czf "$OUT_DIR/$BASENAME.tar.gz" "$BASENAME"
 echo "wrote $OUT_DIR/$BASENAME.tar.gz"
 
-"$STAGE/bin/filmcraft-cli" --version
+"$STAGE/bin/livi-cut-cli" --version
 if [[ "$DRY_RUN" = 1 ]]; then
   echo "==> dry run: tarball contents"
   tar -tzvf "$OUT_DIR/$BASENAME.tar.gz"

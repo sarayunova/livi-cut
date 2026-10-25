@@ -16,8 +16,9 @@ the web build, and creates or updates a **draft**
 GitHub Release named `FilmCraft v<version>`. Nobody sees a draft until a maintainer publishes it.
 
 User-facing names say **LiVi Cut** (publisher **LiVi**). Files and ids are lowercase
-(`livi-cut-<version>-<platform>-<arch>.<ext>`, `com.liviverse.livicut`); the programs keep
-FilmCraft's binary names, `filmcraft` and `filmcraft-cli`.
+(`livi-cut-<version>-<platform>-<arch>.<ext>`, `com.liviverse.livicut`), and the programs are
+`livi-cut` and `livi-cut-cli`. The Cargo packages keep FilmCraft's names (`-p filmcraft`,
+`-p filmcraft-cli`).
 
 ## Cutting a release
 
@@ -67,7 +68,7 @@ signing jobs are refused, and the draft-release job, which needs them, is skippe
 | FreeBSD 14 x86_64 | `livi-cut-<v>-freebsd-x86_64.tar.gz` | FreeBSD 14.3 VM on `ubuntu-latest` |
 | Web | `livi-cut-web-<v>.zip`, a static site (see [`packaging/web/README.md`](../packaging/web/README.md)) | `ubuntu-latest` |
 
-`filmcraft --version` and `filmcraft-cli --version` print the version from `Cargo.toml`.
+`livi-cut --version` and `livi-cut-cli --version` print the version from `Cargo.toml`.
 
 **Fonts.** Every build job checks out [craft-fonts](https://github.com/storytold/craft-fonts) at a
 pinned commit (`craft-fonts-ref` in `.github/workflows/release.yml` and `freebsd.yml`) and builds
@@ -88,7 +89,7 @@ deliberately, in every job at once.
   `packaging/macos/import-cert.sh`.
 - **Notarization:** the app is sent with `xcrun notarytool submit`, then the ticket is stapled
   and checked with `stapler validate`. The app goes on a DMG (`hdiutil makehybrid`), which is
-  signed and notarized too. The universal `filmcraft-cli` is signed the same way, zipped, and the zip is notarized.
+  signed and notarized too. The universal `livi-cut-cli` is signed the same way, zipped, and the zip is notarized.
   Its Finder window (background, icon size and positions) comes from
   [`packaging/macos/dmg/`](../packaging/macos/dmg/README.md), and its volume is named `FilmCraft`
   without the version, which the window's background needs; the DMG file name keeps the version.
@@ -105,7 +106,7 @@ nor the portable zip needs the Visual C++ redistributable.
   an App Paths entry (Win+R `filmcraft`). Same-version upgrades are allowed, so release candidates
   replace each other.
 - The ARM64 build is cross-compiled on the x64 runner. `.github/workflows/windows-arm64.yml`
-  installs that MSI on a Windows 11 ARM64 runner, runs `filmcraft-cli --version` natively and
+  installs that MSI on a Windows 11 ARM64 runner, runs `livi-cut-cli --version` natively and
   uninstalls.
 - **Signing:** `packaging/windows/sign.ps1` signs the executables and then the `.msi` with
   `signtool`, using whichever material is present: a `.pfx` certificate (`WINDOWS_CERTIFICATE`,
@@ -146,13 +147,13 @@ release. The job checks both with `--appimage-updateinformation` and `test -s`.
 `packaging/linux/flatpak-bundle.sh` on the Linux job's tarball: it installs the binaries with
 `packaging/linux/flatpak/com.liviverse.livicut.bundle.yml` into a single-file bundle,
 `livi-cut-<v>-linux-<arch>.flatpak` (no Rust build, so it takes a minute), then installs it and
-runs `filmcraft-cli --version` in the sandbox. Users install it with
+runs `livi-cut-cli --version` in the sandbox. Users install it with
 `flatpak install --user <file>`; the freedesktop runtime comes from Flathub.
 `packaging/linux/flatpak/com.liviverse.livicut.yml` is the from-source manifest for a Flathub
 submission (its header says how to build it). Both manifests must keep the same runtime and
-`finish-args`, and install the same programs: the app and `filmcraft-cli`, which runs the
+`finish-args`, and install the same programs: the app and `livi-cut-cli`, which runs the
 headless commands and the MCP server in the sandbox
-(`flatpak run --command=filmcraft-cli com.liviverse.livicut mcp`). packaging-lint checks this.
+(`flatpak run --command=livi-cut-cli com.liviverse.livicut mcp`). packaging-lint checks this.
 
 ### FreeBSD
 

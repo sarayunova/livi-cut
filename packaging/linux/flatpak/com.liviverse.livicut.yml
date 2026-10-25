@@ -9,8 +9,8 @@
 #
 # The command-line tool and its MCP server run in the same sandbox, without opening a window:
 #
-#   flatpak run --command=filmcraft-cli com.liviverse.livicut --version
-#   flatpak run --command=filmcraft-cli com.liviverse.livicut mcp
+#   flatpak run --command=livi-cut-cli com.liviverse.livicut --version
+#   flatpak run --command=livi-cut-cli com.liviverse.livicut mcp
 #
 # For Flathub, replace the `dir` source with a `git` source pinned to a release tag and commit.
 id: com.liviverse.livicut
@@ -19,7 +19,7 @@ runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
-command: filmcraft
+command: livi-cut
 finish-args:
   # X11 shared memory (MIT-SHM). Without it the X11 fallback is slow or fails.
   - --share=ipc
@@ -47,17 +47,17 @@ finish-args:
 build-options:
   append-path: /usr/lib/sdk/rust-stable/bin
 modules:
-  - name: filmcraft
+  - name: livi-cut
     buildsystem: simple
     build-options:
       env:
-        CARGO_HOME: /run/build/filmcraft/cargo
+        CARGO_HOME: /run/build/livi-cut/cargo
         CARGO_NET_OFFLINE: 'true'
     build-commands:
       - cargo --offline build --release --locked -p filmcraft -p filmcraft-cli
-      - install -Dm755 target/release/filmcraft /app/bin/filmcraft
+      - install -Dm755 target/release/livi-cut /app/bin/livi-cut
       # The headless CLI and its stdio MCP server, as in the release bundle (#346).
-      - install -Dm755 target/release/filmcraft-cli /app/bin/filmcraft-cli
+      - install -Dm755 target/release/livi-cut-cli /app/bin/livi-cut-cli
       - install -Dm644 packaging/linux/com.liviverse.livicut.desktop /app/share/applications/com.liviverse.livicut.desktop
       - install -Dm644 packaging/linux/com.liviverse.livicut.mime.xml /app/share/mime/packages/com.liviverse.livicut.xml
       - mkdir -p /app/share/icons && cp -R assets/app-icon/hicolor /app/share/icons/

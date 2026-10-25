@@ -45,7 +45,7 @@ cargo xtask web --serve 8765                          # the web app on http://12
 | `FILMCRAFT_DATA_DIR` | Same as `--data-dir <dir>`: auto-save, crash recovery, settings and logs |
 | `RUST_LOG` | Log levels for standard error and the log file (see [Logs](#logs)) |
 
-`filmcraft --help` lists the app's options. An option it does not know, or a control port that is
+`livi-cut --help` lists the app's options. An option it does not know, or a control port that is
 not a number (from `--control` or from `FILMCRAFT_CONTROL_PORT`), is an error on stderr with exit
 code 2 instead of a window.
 
@@ -161,7 +161,7 @@ export CARGO_TARGET_DIR=target/agent-hevc     # separate build dir, no lock figh
 - The workspace includes `crates/*` and `apps/*` by glob, so one broken `Cargo.toml` breaks every
   build. Keep every manifest valid at all times, including half-finished crates.
 - Test fixtures always go to `<repo>/target/fixtures/`, whatever `CARGO_TARGET_DIR` says.
-- `.mcp.json` points at `target/release/filmcraft-cli`. With a custom target dir, use your own path.
+- `.mcp.json` points at `target/release/livi-cut-cli`. With a custom target dir, use your own path.
 
 ## 6. How to add…
 
@@ -189,7 +189,7 @@ export CARGO_TARGET_DIR=target/agent-hevc     # separate build dir, no lock figh
    case.
 3. Frontend-only actions (tools, zoom, panels) go in `UI_COMMANDS` in
    `crates/ui-egui/src/menus.rs` with a branch in `menus::invoke`.
-4. The command now appears in menus (from `menu`), shortcuts, `filmcraft-cli commands`,
+4. The command now appears in menus (from `menu`), shortcuts, `livi-cut-cli commands`,
    `engine.commands` and MCP `command_list` without further work.
 
 ### A video effect

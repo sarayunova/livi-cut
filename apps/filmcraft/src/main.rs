@@ -93,7 +93,7 @@ fn main() -> eframe::Result {
             return Ok(());
         }
         Err(e) => {
-            tell(&format!("filmcraft: {e}\n\n{}", args::USAGE), true);
+            tell(&format!("livi-cut: {e}\n\n{}", args::USAGE), true);
             std::process::exit(2);
         }
     };

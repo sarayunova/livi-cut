@@ -4,8 +4,13 @@ description = "FilmCraft desktop app"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-default-run = "filmcraft"
+default-run = "livi-cut"
 build = "build.rs"
+
+# The package keeps FilmCraft's crate name; the program is LiVi Cut's.
+[[bin]]
+name = "livi-cut"
+path = "src/main.rs"
 
 [lints]
 workspace = true
@@ -59,6 +64,6 @@ winit = { version = "0.30", default-features = false }
 # portal file dialogs (rfd) and accesskit already use.
 zbus = "5.19"
 
-# Icon + VERSIONINFO for filmcraft.exe (build.rs); only needed when building on Windows.
+# Icon + VERSIONINFO for livi-cut.exe (build.rs); only needed when building on Windows.
 [target.'cfg(windows)'.build-dependencies]
 winresource = "0.1"

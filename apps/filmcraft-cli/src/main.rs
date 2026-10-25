@@ -1,10 +1,10 @@
 //! FilmCraft headless CLI: every engine command is one shell call away, for scripts and AI agents.
 //!
-//! Run `filmcraft-cli help` for the full reference (also in docs/agents.md).
+//! Run `livi-cut-cli help` for the full reference (also in docs/agents.md).
 
 #![cfg_attr(not(test), deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable))]
 
-/// `println!` that doesn't panic when stdout is closed (`filmcraft-cli commands | head`) with
+/// `println!` that doesn't panic when stdout is closed (`livi-cut-cli commands | head`) with
 /// "failed printing to stdout: Broken pipe (os error 32)". Once stdout has failed, later output is
 /// dropped and the work goes on: see `stdout_failed`.
 macro_rules! outln {
@@ -56,15 +56,15 @@ fn stdout_failed(e: std::io::Error) {
     if STDOUT_GONE.swap(true, Ordering::Relaxed) || e.kind() == std::io::ErrorKind::BrokenPipe {
         return;
     }
-    diag(format_args!("filmcraft-cli: can't write to stdout: {e}"));
+    diag(format_args!("livi-cut-cli: can't write to stdout: {e}"));
     STDOUT_ERROR.store(true, Ordering::Relaxed);
 }
 
 const HELP: &str = "\
-filmcraft-cli: drive LiVi Cut from the shell (headless engine, or the live app with --bridge)
+livi-cut-cli: drive LiVi Cut from the shell (headless engine, or the live app with --bridge)
 
 USAGE
-  filmcraft-cli [OPTIONS] <SUBCOMMAND> [ARGS]
+  livi-cut-cli [OPTIONS] <SUBCOMMAND> [ARGS]
 
 SUBCOMMANDS
   exec <id> [key=value ...]     run one command; prints its result as JSON
@@ -106,7 +106,7 @@ OPTIONS
   --demo                        open the built-in demo project (headless)
   --save                        save the project back to --project when done
   --save-as <p.fcproj>          save the project to this path when done
-  --bridge <127.0.0.1:PORT>     send commands to the running app (`filmcraft --control PORT`)
+  --bridge <127.0.0.1:PORT>     send commands to the running app (`livi-cut --control PORT`)
   --data-dir <dir>              LiVi Cut data directory for user export presets (headless;
                                 default: the app's data directory)
   --keep-going                  `run`: report failing lines and continue
@@ -133,7 +133,7 @@ fn diag(msg: std::fmt::Arguments) {
 }
 
 fn usage(msg: impl std::fmt::Display) -> ! {
-    diag(format_args!("filmcraft-cli: {msg}\nRun `filmcraft-cli help` for usage."));
+    diag(format_args!("livi-cut-cli: {msg}\nRun `livi-cut-cli help` for usage."));
     std::process::exit(2)
 }
 
@@ -157,7 +157,7 @@ async fn write_file(path: impl Into<std::path::PathBuf>, data: Vec<u8>) -> std::
 }
 
 fn fail(msg: impl std::fmt::Display) -> ! {
-    diag(format_args!("filmcraft-cli: {msg}"));
+    diag(format_args!("livi-cut-cli: {msg}"));
     std::process::exit(1)
 }
 
@@ -299,7 +299,7 @@ async fn main() {
 async fn cli() {
     // `std::env::args` panics on an argument that is not Unicode (a Linux file name in Latin-1)
     let a = Args::parse(std::env::args_os().skip(1).map(|a| a.to_string_lossy().into_owned()));
-    // `--help` anywhere (`filmcraft-cli --help`, `filmcraft-cli export --help`) prints the reference:
+    // `--help` anywhere (`livi-cut-cli --help`, `livi-cut-cli export --help`) prints the reference:
     // the parser takes it as a flag option, so it never reaches the subcommand match.
     if a.flag("--help") {
         out!("{HELP}");
@@ -307,7 +307,7 @@ async fn cli() {
     }
     // `--version` anywhere and `-V` as the subcommand, also after global options (`--demo --version`, #710).
     if a.wants_version() {
-        outln!("filmcraft-cli {}", env!("CARGO_PKG_VERSION"));
+        outln!("livi-cut-cli {}", env!("CARGO_PKG_VERSION"));
         return;
     }
     register_hardware_decoders();
@@ -315,7 +315,7 @@ async fn cli() {
     let Some(cmd) = a.pos(0) else { usage("missing subcommand") };
     match cmd {
         "help" | "-h" => out!("{HELP}"),
-        "version" => outln!("filmcraft-cli {}", env!("CARGO_PKG_VERSION")),
+        "version" => outln!("livi-cut-cli {}", env!("CARGO_PKG_VERSION")),
         "probe" => {
             let path = a.pos(1).unwrap_or_else(|| usage("probe <media> [--image-sequence]"));
             match probe::probe(path, a.flag("--image-sequence")) {
@@ -347,7 +347,7 @@ async fn cli() {
                 let id = a.pos(1).unwrap_or_else(|| usage("describe <id>"));
                 match list.iter().find(|c| c["id"] == id) {
                     Some(c) => print(&a, c),
-                    None => fail(format!("unknown command `{id}` (try `filmcraft-cli commands {id}`)")),
+                    None => fail(format!("unknown command `{id}` (try `livi-cut-cli commands {id}`)")),
                 }
                 return;
             }
@@ -564,7 +564,7 @@ fn offline_media(result: &Value) -> Vec<Value> {
 /// One stderr line per offline item that rendered as placeholder frames (#1054).
 fn offline_warning(offline: &[Value]) -> String {
     let s = |o: &Value, k: &str| o.get(k).and_then(Value::as_str).unwrap_or("").to_string();
-    let mut msg = format!("filmcraft-cli: warning: {} offline media item(s) rendered as placeholder frames:", offline.len());
+    let mut msg = format!("livi-cut-cli: warning: {} offline media item(s) rendered as placeholder frames:", offline.len());
     for o in offline {
         let id = o.get("item").and_then(Value::as_u64).map(|i| i.to_string()).unwrap_or_default();
         msg.push_str(&format!("\n  item {id} {} ({}): {}", s(o, "name"), s(o, "status"), s(o, "path")));
@@ -708,7 +708,7 @@ mod format_tests {
         assert_eq!(super::absolute(""), "");
         #[cfg(unix)]
         {
-            let dir = std::env::temp_dir().join(format!("filmcraft-cli-abs-{}", std::process::id()));
+            let dir = std::env::temp_dir().join(format!("livi-cut-cli-abs-{}", std::process::id()));
             std::fs::create_dir_all(&dir).unwrap();
             std::fs::write(dir.join("real.mov"), b"x").unwrap();
             let link = dir.join("link.mov");

@@ -59,9 +59,9 @@ STAGE="$WORK/root"
 rm -rf "$WORK"
 
 # ---- stage an FHS tree (shared by every format) -------------------------------------------------
-install -Dm755 "$BIN/filmcraft" "$STAGE/usr/bin/filmcraft"
-install -Dm755 "$BIN/filmcraft-cli" "$STAGE/usr/bin/filmcraft-cli"
-"${CROSS_COMPILE:-}strip" "$STAGE/usr/bin/filmcraft" "$STAGE/usr/bin/filmcraft-cli" 2>/dev/null || true
+install -Dm755 "$BIN/livi-cut" "$STAGE/usr/bin/livi-cut"
+install -Dm755 "$BIN/livi-cut-cli" "$STAGE/usr/bin/livi-cut-cli"
+"${CROSS_COMPILE:-}strip" "$STAGE/usr/bin/livi-cut" "$STAGE/usr/bin/livi-cut-cli" 2>/dev/null || true
 install -Dm644 "$HERE/$APP_ID.desktop" "$STAGE/usr/share/applications/$APP_ID.desktop"
 install -Dm644 "$HERE/$APP_ID.mime.xml" "$STAGE/usr/share/mime/packages/$APP_ID.xml"
 mkdir -p "$STAGE/usr/share/metainfo"
@@ -69,8 +69,8 @@ sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$FILMCRAFT_BUILD_DATE/g" \
   "$HERE/$APP_ID.metainfo.xml.in" >"$STAGE/usr/share/metainfo/$APP_ID.metainfo.xml"
 mkdir -p "$STAGE/usr/share/icons"
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/usr/share/icons/"
-mkdir -p "$STAGE/usr/share/doc/filmcraft"
-copy_docs "$STAGE/usr/share/doc/filmcraft"
+mkdir -p "$STAGE/usr/share/doc/livi-cut"
+copy_docs "$STAGE/usr/share/doc/livi-cut"
 
 if command -v desktop-file-validate >/dev/null; then
   desktop-file-validate "$STAGE/usr/share/applications/$APP_ID.desktop"
@@ -121,7 +121,7 @@ if has appimage; then
   APPDIR="$WORK/FilmCraft.AppDir"
   cp -R "$STAGE" "$APPDIR"
   mv "$APPDIR/usr/share/doc" "$WORK/doc-unused"
-  ln -s usr/bin/filmcraft "$APPDIR/AppRun"
+  ln -s usr/bin/livi-cut "$APPDIR/AppRun"
   cp "$HERE/$APP_ID.desktop" "$APPDIR/$APP_ID.desktop"
   cp "$ROOT/assets/app-icon/hicolor/256x256/apps/$APP_ID.png" "$APPDIR/$APP_ID.png"
   ln -s "$APP_ID.png" "$APPDIR/.DirIcon"
@@ -184,9 +184,9 @@ if has appimage; then
 fi
 
 if [[ -z "${CROSS_TARGET:-}" ]]; then
-  "$STAGE/usr/bin/filmcraft-cli" --version
+  "$STAGE/usr/bin/livi-cut-cli" --version
 elif [[ -n "${EMULATOR:-}" ]]; then
-  "$EMULATOR" "$STAGE/usr/bin/filmcraft-cli" --version
+  "$EMULATOR" "$STAGE/usr/bin/livi-cut-cli" --version
 fi
 echo "==> done"
 ls -lh "$DIST"

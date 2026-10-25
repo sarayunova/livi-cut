@@ -4,12 +4,6 @@
 #
 #   nfpm package -f packaging/linux/nfpm.yaml -p deb -t dist/release/
 name: livi-cut
-# The binaries keep FilmCraft's names (/usr/bin/filmcraft, filmcraft-cli), so this package cannot
-# be installed next to a filmcraft package: installing one replaces the other.
-conflicts:
-  - filmcraft
-replaces:
-  - filmcraft
 arch: ${NFPM_ARCH}
 platform: linux
 version: ${VERSION}
@@ -26,7 +20,7 @@ description: |-
   Timeline editing with source and program monitors, color grading and scopes,
   effects and keyframes, titles and captions, audio mixing with loudness meters,
   and export; GPU compositing (wgpu).
-  Includes filmcraft-cli, a headless command runner, MCP server and exporter.
+  Includes livi-cut-cli, a headless command runner, MCP server and exporter.
 
 # The binaries link only glibc and libgcc_s directly. Windowing (X11/Wayland, xkbcommon) and the
 # GPU (Vulkan, EGL/GL) are loaded at runtime, so they are dependencies/recommendations here
@@ -66,11 +60,11 @@ overrides:
       - xdg-desktop-portal
 
 contents:
-  - src: ${STAGE}/usr/bin/filmcraft
-    dst: /usr/bin/filmcraft
+  - src: ${STAGE}/usr/bin/livi-cut
+    dst: /usr/bin/livi-cut
     file_info: { mode: 0755 }
-  - src: ${STAGE}/usr/bin/filmcraft-cli
-    dst: /usr/bin/filmcraft-cli
+  - src: ${STAGE}/usr/bin/livi-cut-cli
+    dst: /usr/bin/livi-cut-cli
     file_info: { mode: 0755 }
   - src: ${STAGE}/usr/share/
     dst: /usr/share/

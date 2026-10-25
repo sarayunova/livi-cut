@@ -203,7 +203,7 @@ Import merges the document's bins, media and sequences into your project as one 
 
 ## Built for agents
 
-Every menu item, button, slider and drag in LiVi Cut is a **command** with an id, typed parameters and an enabled state. There are more than 650 engine commands (`filmcraft-cli commands` lists them), with more commands continuously added. The UI, the CLI, a JSON control channel and an **MCP server** all dispatch the same commands, so Claude or any agent can cut, trim, grade, mix and export exactly the way a person does. The UI can also be driven at the level of mouse and keyboard: every widget has an automation id, and agents can click, drag, type and take screenshots.
+Every menu item, button, slider and drag in LiVi Cut is a **command** with an id, typed parameters and an enabled state. There are more than 650 engine commands (`livi-cut-cli commands` lists them), with more commands continuously added. The UI, the CLI, a JSON control channel and an **MCP server** all dispatch the same commands, so Claude or any agent can cut, trim, grade, mix and export exactly the way a person does. The UI can also be driven at the level of mouse and keyboard: every widget has an automation id, and agents can click, drag, type and take screenshots.
 
 ```jsonc
 // over the control channel (JSON lines on TCP) or as MCP tool calls
@@ -318,7 +318,7 @@ PowerShell, from the folder containing the executable:
 
 ```powershell
 $env:WGPU_BACKEND = "vulkan"
-& .\filmcraft.exe
+& .\livi-cut.exe
 Remove-Item Env:WGPU_BACKEND                     # restore the default for later launches
 ```
 

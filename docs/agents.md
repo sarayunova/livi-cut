@@ -7,52 +7,52 @@ FilmCraft from an agent. Part 2 covers developing FilmCraft as an agent.
 
 ## 1. MCP server
 
-`filmcraft-cli mcp` serves MCP on stdio. It has two modes:
+`livi-cut-cli mcp` serves MCP on stdio. It has two modes:
 
 | Mode | Command | What it drives |
 |---|---|---|
-| Headless | `filmcraft-cli mcp --demo` or `--project p.fcproj` (neither = empty project) | an in-process engine session, no window |
-| Bridge | `filmcraft-cli mcp --bridge 127.0.0.1:9876` | the running desktop app started with `filmcraft --control 9876` |
+| Headless | `livi-cut-cli mcp --demo` or `--project p.fcproj` (neither = empty project) | an in-process engine session, no window |
+| Bridge | `livi-cut-cli mcp --bridge 127.0.0.1:9876` | the running desktop app started with `livi-cut --control 9876` |
 
 Headless mode also takes `--data-dir DIR` (user presets). Any other option is rejected (exit 2):
 there are no folder-confinement flags such as `--automation-read-root`, so the server can read
 and write wherever the user can.
 
 **Claude Code.** The repository's `.mcp.json` registers both servers (`filmcraft` = bridge,
-`filmcraft-headless` = demo). Both point at `target/release/filmcraft-cli`, so build it first:
+`filmcraft-headless` = demo). Both point at `target/release/livi-cut-cli`, so build it first:
 
 ```sh
 cargo build --release -p filmcraft-cli -p filmcraft
 export FILMCRAFT_CONTROL_TOKEN="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
-./target/release/filmcraft --control 9876 &      # only for the bridge server
+./target/release/livi-cut --control 9876 &      # only for the bridge server
 claude                                           # approve the project MCP servers when asked
 ```
 
 To register the server by hand, or for another MCP client, use the absolute binary path:
 
 ```sh
-claude mcp add filmcraft-headless -- /abs/path/filmcraft/target/release/filmcraft-cli mcp --demo
+claude mcp add filmcraft-headless -- /abs/path/filmcraft/target/release/livi-cut-cli mcp --demo
 ```
 
 ```json
-{ "mcpServers": { "filmcraft": { "command": "/abs/path/filmcraft-cli", "args": ["mcp", "--bridge", "127.0.0.1:9876"] } } }
+{ "mcpServers": { "filmcraft": { "command": "/abs/path/livi-cut-cli", "args": ["mcp", "--bridge", "127.0.0.1:9876"] } } }
 ```
 
 ### From an installed release
 
-The release packages ship `filmcraft-cli` alongside the desktop app, so no build is needed:
+The release packages ship `livi-cut-cli` alongside the desktop app, so no build is needed:
 
 | Install | CLI |
 |---|---|
-| Windows (MSI) | `C:\Program Files\FilmCraft\filmcraft-cli.exe` by default (wherever you installed it otherwise), not on `PATH` |
-| Linux (deb, rpm) | `/usr/bin/filmcraft-cli` |
+| Windows (MSI) | `C:\Program Files\LiVi Cut\livi-cut-cli.exe` by default (wherever you installed it otherwise), not on `PATH` |
+| Linux (deb, rpm) | `/usr/bin/livi-cut-cli` |
 | macOS | the separate `livi-cut-cli-<version>-macos-<arch>.zip` release asset (the `.app` holds only the desktop app) |
 
 ```sh
 # Windows, default install folder
-claude mcp add filmcraft -- "C:\Program Files\FilmCraft\filmcraft-cli.exe" mcp
+claude mcp add livi-cut -- "C:\Program Files\LiVi Cut\livi-cut-cli.exe" mcp
 # Linux, or macOS with the CLI unzipped onto PATH
-claude mcp add filmcraft -- filmcraft-cli mcp
+claude mcp add livi-cut -- livi-cut-cli mcp
 ```
 
 ### Tools
@@ -130,11 +130,11 @@ progress and stop it:
   ignore the token.
 - Bridge mode works the same way: the export runs as an app job (the app stays responsive and shows
   "Exporting… NN%" in its status bar) and the call returns when it is written, however long it
-  takes. `filmcraft-cli --bridge … exec file.exportMedia … wait=true` blocks the same way.
+  takes. `livi-cut-cli --bridge … exec file.exportMedia … wait=true` blocks the same way.
 
 ## 2. Control channel
 
-`filmcraft --control 9876` (or `FILMCRAFT_CONTROL_PORT=9876`) listens on `127.0.0.1` only. Send one
+`livi-cut --control 9876` (or `FILMCRAFT_CONTROL_PORT=9876`) listens on `127.0.0.1` only. Send one
 JSON request per line and get one JSON reply per line. Set a fresh `FILMCRAFT_CONTROL_TOKEN` for the
 desktop session as above; the CLI / MCP bridge must inherit the same variable. Raw requests must
 include it as `token` on every line (replace the placeholders below). Full setup and method table:
@@ -191,32 +191,32 @@ Notes:
 - `timeline.move` takes linked partners along while Linked Selection is on: moving a picture
   clip moves its sound by the same offset (pass `"linked": false` to move only the listed clips).
   It returns `{"moved": [ids]}`, every clip that moved.
-- Without a window, `filmcraft-cli run script.jsonl` (lines of `{"id":"…","params":{…}}`) runs the
+- Without a window, `livi-cut-cli run script.jsonl` (lines of `{"id":"…","params":{…}}`) runs the
   same commands headlessly. See §2b for the rest of the CLI.
 
 ## 2b. Command-line interface
 
 Every command is also one shell call away. Options go anywhere; output is JSON; exit status is 0 on
-success, 1 when a command fails and 2 on a usage error. `filmcraft-cli help`, `filmcraft-cli --help`
-and `filmcraft-cli -h` print the reference and exit successfully.
-If the reader of stdout closes the pipe early (`filmcraft-cli commands | head`), the CLI drops the rest
+success, 1 when a command fails and 2 on a usage error. `livi-cut-cli help`, `livi-cut-cli --help`
+and `livi-cut-cli -h` print the reference and exit successfully.
+If the reader of stdout closes the pipe early (`livi-cut-cli commands | head`), the CLI drops the rest
 of its output but still finishes the work, saves included, and the exit status still reports
 failures; any other stdout write error is reported and makes the status 1.
 
 ```sh
-filmcraft-cli commands razor                     # find ids (add --json for machine output)
-filmcraft-cli describe timeline.razor            # one command: menu, shortcut, params, enabled now
-filmcraft-cli --demo inspect sequence            # project / sequence as JSON
-filmcraft-cli --project p.fcproj --save exec timeline.razor seconds=3.5
-filmcraft-cli --project p.fcproj exec effects.apply '{"effect":"Gaussian Blur"}'
-filmcraft-cli --project p.fcproj exec markers.exportCsv path=review.csv
-filmcraft-cli --project p.fcproj --save import a.mov b.wav
-filmcraft-cli --project p.fcproj export out.mp4  # format from the extension; waits for the job
-filmcraft-cli --project p.fcproj export out --preset "YouTube 1080p Full HD" --start 0 --end 10
-filmcraft-cli export --list-presets prores       # built-in + user presets (--data-dir for another library)
-filmcraft-cli --project p.fcproj exec export.queue.add preset="Apple ProRes 422 HQ" path=renders/ start=true wait=true
-echo '{"id":"file.newBin","params":{"name":"Selects"}}' | filmcraft-cli --project p.fcproj --save run -
-filmcraft-cli --bridge 127.0.0.1:9876 exec window.workspace.color   # the running app
+livi-cut-cli commands razor                     # find ids (add --json for machine output)
+livi-cut-cli describe timeline.razor            # one command: menu, shortcut, params, enabled now
+livi-cut-cli --demo inspect sequence            # project / sequence as JSON
+livi-cut-cli --project p.fcproj --save exec timeline.razor seconds=3.5
+livi-cut-cli --project p.fcproj exec effects.apply '{"effect":"Gaussian Blur"}'
+livi-cut-cli --project p.fcproj exec markers.exportCsv path=review.csv
+livi-cut-cli --project p.fcproj --save import a.mov b.wav
+livi-cut-cli --project p.fcproj export out.mp4  # format from the extension; waits for the job
+livi-cut-cli --project p.fcproj export out --preset "YouTube 1080p Full HD" --start 0 --end 10
+livi-cut-cli export --list-presets prores       # built-in + user presets (--data-dir for another library)
+livi-cut-cli --project p.fcproj exec export.queue.add preset="Apple ProRes 422 HQ" path=renders/ start=true wait=true
+echo '{"id":"file.newBin","params":{"name":"Selects"}}' | livi-cut-cli --project p.fcproj --save run -
+livi-cut-cli --bridge 127.0.0.1:9876 exec window.workspace.color   # the running app
 ```
 
 `key=value` values are parsed as JSON when they can be (`3.5`, `true`, `[1,2]`), otherwise taken as

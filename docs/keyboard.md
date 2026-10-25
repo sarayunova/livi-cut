@@ -7,7 +7,7 @@ that FilmCraft Default uses as well). `presets::premiere()` is the whole preset.
 
 Every entry names a FilmCraft command id. Engine commands run through `Session::execute`; UI
 commands (frames, panels, monitor zoom, Project and Text panel navigation) run through
-`menus::invoke`. Both are reachable by id from the CLI (`filmcraft-cli exec <id>`), the control
+`menus::invoke`. Both are reachable by id from the CLI (`livi-cut-cli exec <id>`), the control
 channel (`engine.execute` / `ui.menu.invoke`) and MCP (`command_run`).
 
 Tests: `crates/engine/src/keyboard_tests.rs` (no key used twice in one scope; behaviour of the

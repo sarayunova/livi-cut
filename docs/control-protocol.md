@@ -1,15 +1,15 @@
 # Control protocol & MCP
 
 ## Desktop control channel
-`filmcraft --control 9876` (or `FILMCRAFT_CONTROL_PORT`) listens on `127.0.0.1:<port>` (loopback only).
+`livi-cut --control 9876` (or `FILMCRAFT_CONTROL_PORT`) listens on `127.0.0.1:<port>` (loopback only).
 The listener requires `FILMCRAFT_CONTROL_TOKEN`: 64 random hex characters shared with authorized
 clients through their inherited environment. Generate a fresh token for each desktop session, then
 start the desktop and bridge from that environment:
 
 ```sh
 export FILMCRAFT_CONTROL_TOKEN="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
-filmcraft --control 9876 &
-filmcraft-cli mcp --bridge 127.0.0.1:9876
+livi-cut --control 9876 &
+livi-cut-cli mcp --bridge 127.0.0.1:9876
 ```
 
 The CLI / MCP bridge reads this variable automatically. Keep it private: don't put the value in
@@ -176,7 +176,7 @@ Ctrl), `Ctrl` (macOS ⌃), `Alt`, `Shift`. The dialog (Edit ▸ Keyboard Shortcu
 `shortcuts.*` (`shortcuts.key.K`, `shortcuts.cell.<command>`, `shortcuts.ok`, …).
 
 ## MCP
-`filmcraft-cli mcp` serves MCP on stdio: headless (in-process session; `--demo` / `--project p.fcproj`)
+`livi-cut-cli mcp` serves MCP on stdio: headless (in-process session; `--demo` / `--project p.fcproj`)
 or `--bridge 127.0.0.1:9876` to drive the running app. Tools: `command_list`, `command_run`,
 `command_batch`, `doc_inspect`, `render_preview`, `project_inspect`, `sequence_inspect`, `media_import`,
 `render_frame`, `ui_inspect`, `ui_elements`, `ui_click`, `ui_drag`, `ui_key`, `ui_type`, `ui_screenshot`,

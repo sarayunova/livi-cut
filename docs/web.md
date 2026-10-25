@@ -111,7 +111,7 @@ with the method's `result`, errors reject.
 
 | Call | |
 |---|---|
-| `filmcraft.execute(command, params)` | run an engine command (same ids and params as MCP / `filmcraft-cli`) |
+| `filmcraft.execute(command, params)` | run an engine command (same ids and params as MCP / `livi-cut-cli`) |
 | `filmcraft.request(method, params)` | any control method: `ui.inspect`, `ui.click`, `ui.key`, `ui.playback`, `ui.menu.invoke`… |
 | `filmcraft.commands()` | the command list |
 | `filmcraft.inspect()` | `ui.inspect` |

@@ -1,10 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=FilmCraft
+Name=LiVi Cut
 GenericName=Video Editor
 Comment=Edit video, color and sound
-Exec=filmcraft %F
-TryExec=filmcraft
+Exec=livi-cut %F
+TryExec=livi-cut
 Icon=com.liviverse.livicut
 Terminal=false
 StartupNotify=true

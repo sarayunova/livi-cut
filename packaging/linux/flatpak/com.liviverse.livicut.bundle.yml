@@ -16,7 +16,7 @@ id: com.liviverse.livicut
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
-command: filmcraft
+command: livi-cut
 finish-args:
   # X11 shared memory (MIT-SHM). Without it the X11 fallback is slow or fails.
   - --share=ipc
@@ -42,18 +42,18 @@ finish-args:
   # the sandbox; `flatpak override --user --share=network com.liviverse.livicut` exposes it
   # to host agents) and host-wide filesystem access.
 modules:
-  - name: filmcraft
+  - name: livi-cut
     buildsystem: simple
     build-commands:
-      - install -Dm755 bin/filmcraft /app/bin/filmcraft
-      - install -Dm755 bin/filmcraft-cli /app/bin/filmcraft-cli
+      - install -Dm755 bin/livi-cut /app/bin/livi-cut
+      - install -Dm755 bin/livi-cut-cli /app/bin/livi-cut-cli
       - install -Dm644 share/applications/com.liviverse.livicut.desktop /app/share/applications/com.liviverse.livicut.desktop
       # The same MIME file the deb/rpm install: it defines the .fcproj project type (the
       # runtime's shared-mime-info already knows the video and audio formats).
       - install -Dm644 share/mime/packages/com.liviverse.livicut.xml /app/share/mime/packages/com.liviverse.livicut.xml
       # Already has the release's version and date substituted by package.sh.
       - install -Dm644 share/metainfo/com.liviverse.livicut.metainfo.xml /app/share/metainfo/com.liviverse.livicut.metainfo.xml
-      - mkdir -p /app/share/icons /app/share/doc && cp -R share/icons/hicolor /app/share/icons/ && cp -R share/doc/filmcraft /app/share/doc/
+      - mkdir -p /app/share/icons /app/share/doc && cp -R share/icons/hicolor /app/share/icons/ && cp -R share/doc/livi-cut /app/share/doc/
     sources:
       - type: dir
         path: stage

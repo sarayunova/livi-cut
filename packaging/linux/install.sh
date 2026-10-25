@@ -26,21 +26,21 @@ prefix="$(realpath -m -- "$prefix")"
 source_dir="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)"
 case "$prefix/" in "$source_dir/"*) fail 'choose an installation prefix outside the extracted tarball' ;; esac
 app_id=com.liviverse.livicut
-for binary in filmcraft filmcraft-cli; do
+for binary in livi-cut livi-cut-cli; do
   [[ -f "$source_dir/bin/$binary" ]] || fail "missing bin/$binary; extract the complete tarball first"
 done
 [[ -f "$source_dir/share/applications/$app_id.desktop" ]] || fail 'missing desktop entry; extract the complete tarball first'
 
 mkdir -p -- "$prefix/bin" "$prefix/share"
-install -m755 -- "$source_dir/bin/filmcraft" "$prefix/bin/filmcraft"
-install -m755 -- "$source_dir/bin/filmcraft-cli" "$prefix/bin/filmcraft-cli"
+install -m755 -- "$source_dir/bin/livi-cut" "$prefix/bin/livi-cut"
+install -m755 -- "$source_dir/bin/livi-cut-cli" "$prefix/bin/livi-cut-cli"
 cp -R -- "$source_dir/share/." "$prefix/share/"
 
 # Use an absolute path so launching from the application menu does not depend on PATH.
 # Escape the Exec argument, then the desktop entry's string value (two separate layers).
 # https://specifications.freedesktop.org/desktop-entry/latest/exec-variables.html
-exec_path="$(printf '%s' "$prefix/bin/filmcraft" | sed 's/[\\"`$]/\\&/g; s/\\/\\\\/g')"
-try_path="$(printf '%s' "$prefix/bin/filmcraft" | sed 's/\\/\\\\/g')"
+exec_path="$(printf '%s' "$prefix/bin/livi-cut" | sed 's/[\\"`$]/\\&/g; s/\\/\\\\/g')"
+try_path="$(printf '%s' "$prefix/bin/livi-cut" | sed 's/\\/\\\\/g')"
 while IFS= read -r line || [[ -n "$line" ]]; do
   case "$line" in
     Exec=*) printf 'Exec="%s" %%F\n' "$exec_path" ;;
@@ -59,7 +59,7 @@ fi
 if command -v gtk-update-icon-cache >/dev/null 2>&1; then
   gtk-update-icon-cache -q -t -f "$prefix/share/icons/hicolor" || echo 'warning: icon cache refresh failed' >&2
 fi
-printf 'Installed FilmCraft in %s\nLaunch it from the application menu or run "%s/bin/filmcraft".\n' "$prefix" "$prefix"
+printf 'Installed LiVi Cut in %s\nLaunch it from the application menu or run "%s/bin/livi-cut".\n' "$prefix" "$prefix"
 case ":${PATH:-}:" in
   *":$prefix/bin:"*) ;;
   *) printf 'For terminal commands, add %s/bin to your PATH.\n' "$prefix" ;;

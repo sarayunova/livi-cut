@@ -28,11 +28,11 @@ class InstallTests(unittest.TestCase):
         shutil.copyfile(
             HERE / f"{APP_ID}.desktop", self.share / "applications" / f"{APP_ID}.desktop"
         )
-        for name in ("filmcraft", "filmcraft-cli"):
+        for name in ("livi-cut", "livi-cut-cli"):
             (self.bundle / "bin" / name).write_text(
                 '#!/bin/sh\nprintf \'%s\\n\' "$0" "$@" > "$(dirname "$0")/launched"\n'
             )
-        for path in ("doc/filmcraft/LICENSE-MIT", "icons/hicolor/test", "mime/packages/test.xml"):
+        for path in ("doc/livi-cut/LICENSE-MIT", "icons/hicolor/test", "mime/packages/test.xml"):
             target = self.share / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text("fixture\n")
@@ -50,20 +50,20 @@ class InstallTests(unittest.TestCase):
         other.parent.mkdir(parents=True)
         other.write_text("unrelated\n")
         for version in ("first", "updated"):
-            (self.bundle / "share/doc/filmcraft/LICENSE-MIT").write_text(version)
+            (self.bundle / "share/doc/livi-cut/LICENSE-MIT").write_text(version)
             result = self.install("--prefix", prefix)
             self.assertEqual(result.returncode, 0, result.stderr)
-            for name in ("filmcraft", "filmcraft-cli"):
+            for name in ("livi-cut", "livi-cut-cli"):
                 self.assertTrue(os.access(prefix / "bin" / name, os.X_OK))
                 self.assertEqual(
                     (prefix / "bin" / name).read_bytes(), (self.bundle / "bin" / name).read_bytes()
                 )
-            self.assertEqual((prefix / "share/doc/filmcraft/LICENSE-MIT").read_text(), version)
+            self.assertEqual((prefix / "share/doc/livi-cut/LICENSE-MIT").read_text(), version)
             self.assertTrue((prefix / "share/icons/hicolor/test").is_file())
             self.assertTrue((prefix / "share/mime/packages/test.xml").is_file())
             self.assertEqual(other.read_text(), "unrelated\n")
         desktop = prefix / "share/applications" / f"{APP_ID}.desktop"
-        self.assertIn(f'Exec="{prefix}/bin/filmcraft" %F\n', desktop.read_text())
+        self.assertIn(f'Exec="{prefix}/bin/livi-cut" %F\n', desktop.read_text())
         if shutil.which("desktop-file-validate"):
             subprocess.run(["desktop-file-validate", str(desktop)], check=True)
 
@@ -79,11 +79,11 @@ class InstallTests(unittest.TestCase):
         launched = prefix / "bin/launched"
         for _ in range(100):
             if launched.exists() and launched.read_text().splitlines() == [
-                str(prefix / "bin/filmcraft"), str(document)
+                str(prefix / "bin/livi-cut"), str(document)
             ]:
                 break
             time.sleep(0.01)
-        self.assertEqual(launched.read_text().splitlines(), [str(prefix / "bin/filmcraft"), str(document)])
+        self.assertEqual(launched.read_text().splitlines(), [str(prefix / "bin/livi-cut"), str(document)])
 
     def test_invalid_arguments_fail_before_writing(self):
         for args in (("--prefix",), ("--prefix", "relative"), ("--prefix", "/"), ("--unknown",),
@@ -96,7 +96,7 @@ class InstallTests(unittest.TestCase):
                 self.assertNotEqual(self.install(*args).returncode, 0)
 
     def test_incomplete_bundle_does_not_install(self):
-        (self.bundle / "bin/filmcraft-cli").unlink()
+        (self.bundle / "bin/livi-cut-cli").unlink()
         prefix = self.root / "destination"
         result = self.install("--prefix", prefix)
         self.assertNotEqual(result.returncode, 0)
@@ -110,7 +110,7 @@ class InstallTests(unittest.TestCase):
         target = self.root / "target"
         binaries = target / "release"
         binaries.mkdir(parents=True)
-        for name in ("filmcraft", "filmcraft-cli"):
+        for name in ("livi-cut", "livi-cut-cli"):
             binary = binaries / name
             binary.write_text("#!/bin/sh\necho 'FilmCraft fixture'\n")
             binary.chmod(0o755)

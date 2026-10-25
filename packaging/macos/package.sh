@@ -63,7 +63,7 @@ fi
 
 rm -rf "$WORK"
 mkdir -p "$WORK/bin"
-for bin in filmcraft filmcraft-cli; do
+for bin in livi-cut livi-cut-cli; do
   inputs=()
   for t in "${TARGETS[@]}"; do inputs+=("$CARGO_TARGET_DIR/$t/release/$bin"); done
   lipo -create -output "$WORK/bin/$bin" "${inputs[@]}"
@@ -101,7 +101,7 @@ notarize() {
 echo "==> assembling $APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 # Executable and icon carry the display name (CFBundleExecutable / CFBundleIconFile).
-cp "$WORK/bin/filmcraft" "$APP/Contents/MacOS/LiViCut"
+cp "$WORK/bin/livi-cut" "$APP/Contents/MacOS/LiViCut"
 cp "$ROOT/assets/app-icon/filmcraft.icns" "$APP/Contents/Resources/LiViCut.icns"
 sed -e "s/@VERSION@/$VERSION/g" -e "s/@SHORT_VERSION@/$SHORT_VERSION/g" \
   -e "s/@BUILD_SHA@/${FILMCRAFT_BUILD_SHA:-unknown}/g" \
@@ -155,15 +155,15 @@ fi
 echo "==> building $CLI_ZIP"
 CLI_DIR="$WORK/livi-cut-cli-$VERSION-macos-$ARCH"
 mkdir -p "$CLI_DIR"
-cp "$WORK/bin/filmcraft-cli" "$CLI_DIR/"
+cp "$WORK/bin/livi-cut-cli" "$CLI_DIR/"
 copy_docs "$CLI_DIR"
-sign --options runtime "$CLI_DIR/filmcraft-cli"
-codesign --verify --strict --verbose=2 "$CLI_DIR/filmcraft-cli"
+sign --options runtime "$CLI_DIR/livi-cut-cli"
+codesign --verify --strict --verbose=2 "$CLI_DIR/livi-cut-cli"
 rm -f "$CLI_ZIP"
 ditto -c -k --keepParent "$CLI_DIR" "$CLI_ZIP"
 # A bare Mach-O can't carry a stapled ticket; Gatekeeper looks the notarization up online.
 if [[ "$NOTARIZE" = 1 ]]; then notarize "$CLI_ZIP"; fi
 
-"$WORK/bin/filmcraft-cli" --version
+"$WORK/bin/livi-cut-cli" --version
 echo "==> done"
 ls -lh "$DMG" "$CLI_ZIP"

@@ -307,9 +307,9 @@ impl FilmcraftMcp {
     async fn ui(&self, method: &str, params: Value) -> Result<CallToolResult, McpError> {
         match self.bridge_client() {
             Some(b) => wrap(b.call(method, params).await),
-            None => Ok(fail(
-                "this tool drives the live app: run `filmcraft-cli mcp --bridge 127.0.0.1:<port>` with the app started as `filmcraft --control <port>`",
-            )),
+            None => {
+                Ok(fail("this tool drives the live app: run `livi-cut-cli mcp --bridge 127.0.0.1:<port>` with the app started as `livi-cut --control <port>`"))
+            }
         }
     }
 }

@@ -5,7 +5,7 @@
 .DESCRIPTION
   Produces, in $env:DIST (default: dist/release):
     livi-cut-<version>-windows-<arch>.msi            per-machine installer (WiX v5)
-    livi-cut-<version>-windows-<arch>-portable.zip   filmcraft.exe + filmcraft-cli.exe + portable.txt
+    livi-cut-<version>-windows-<arch>-portable.zip   livi-cut.exe + livi-cut-cli.exe + portable.txt
 
   The binaries link the C runtime statically (+crt-static), so neither the MSI nor the portable
   zip needs the Visual C++ redistributable. Signing is delegated to sign.ps1 (skipped with a
@@ -77,7 +77,7 @@ function Get-PeHeader([string] $Path) {
   return @{ Machine = [BitConverter]::ToUInt16($bytes, $pe + 4); Subsystem = [BitConverter]::ToUInt16($bytes, $pe + 0x5C) }
 }
 $Machine = switch ($Arch) { 'x64' { 0x8664 } 'x86' { 0x14C } 'arm64' { 0xAA64 } }
-foreach ($check in @(@('filmcraft.exe', 2), @('filmcraft-cli.exe', 3))) {
+foreach ($check in @(@('livi-cut.exe', 2), @('livi-cut-cli.exe', 3))) {
   $h = Get-PeHeader (Join-Path $Bin $check[0])
   if ($h.Machine -ne $Machine) { throw "$($check[0]) is for machine 0x$('{0:X}' -f $h.Machine), expected 0x$('{0:X}' -f $Machine) ($Arch)" }
   if ($h.Subsystem -ne $check[1]) { throw "$($check[0]) has PE subsystem $($h.Subsystem), expected $($check[1])" }
@@ -86,9 +86,9 @@ foreach ($check in @(@('filmcraft.exe', 2), @('filmcraft-cli.exe', 3))) {
 $Stage = Join-Path $TargetDir "windows-package\$Arch"
 Remove-Item -Recurse -Force $Stage -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $Stage | Out-Null
-Copy-Item (Join-Path $Bin 'filmcraft.exe'), (Join-Path $Bin 'filmcraft-cli.exe') $Stage
+Copy-Item (Join-Path $Bin 'livi-cut.exe'), (Join-Path $Bin 'livi-cut-cli.exe') $Stage
 
-& (Join-Path $PSScriptRoot 'sign.ps1') (Join-Path $Stage 'filmcraft.exe') (Join-Path $Stage 'filmcraft-cli.exe')
+& (Join-Path $PSScriptRoot 'sign.ps1') (Join-Path $Stage 'livi-cut.exe') (Join-Path $Stage 'livi-cut-cli.exe')
 
 # ---- MSI ---------------------------------------------------------------------------------------
 $Msi = Join-Path $Dist "livi-cut-$Version-windows-$Arch.msi"
@@ -109,7 +109,7 @@ Copy-Item (Join-Path $Stage '*.exe') $Portable
 # The marker that makes FilmCraft keep its data in .\data next to the exe instead of %APPDATA% (#139).
 Set-Content -Encoding ascii -Path (Join-Path $Portable 'portable.txt') -Value @(
   'LiVi Cut portable: preferences, presets, logs and crash recovery are kept in the data folder',
-  'next to filmcraft.exe. Delete this file to use %APPDATA%\LiVi Cut instead.'
+  'next to livi-cut.exe. Delete this file to use %APPDATA%\LiVi Cut instead.'
 )
 foreach ($f in 'README.md', 'LICENSE', 'LICENSE-MIT', 'LICENSE-APACHE') {
   $p = Join-Path $Root $f
@@ -129,8 +129,8 @@ Compress-Archive -Path $Portable -DestinationPath $Zip
 # here; .github/workflows/windows-arm64.yml installs and runs it on ARM64 instead.
 $HostArch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
 if ($Arch -ne 'arm64' -or $HostArch -eq 'arm64') {
-  Invoke-Native 'filmcraft-cli --version' { & (Join-Path $Stage 'filmcraft-cli.exe') --version }
+  Invoke-Native 'livi-cut-cli --version' { & (Join-Path $Stage 'livi-cut-cli.exe') --version }
 } else {
-  Write-Output "skipping filmcraft-cli --version: an $Arch build doesn't run on this $HostArch machine"
+  Write-Output "skipping livi-cut-cli --version: an $Arch build doesn't run on this $HostArch machine"
 }
 Get-Item $Msi, $Zip | Format-Table Name, Length

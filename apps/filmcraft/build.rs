@@ -1,4 +1,4 @@
-//! Windows only: embed the app icon and version info (VERSIONINFO) into `filmcraft.exe`, so it
+//! Windows only: embed the app icon and version info (VERSIONINFO) into `livi-cut.exe`, so it
 //! shows in Explorer, the taskbar, the Start menu and Alt-Tab.
 //!
 //! On every other target this does nothing (`winresource` is only a build-dependency on Windows
@@ -23,13 +23,13 @@ mod windows {
             .set("ProductName", "LiVi Cut")
             .set("FileDescription", "LiVi Cut video editor")
             .set("LegalCopyright", "Copyright (c) the FilmCraft contributors. MIT OR Apache-2.0.")
-            .set("OriginalFilename", "filmcraft.exe")
-            .set("InternalName", "filmcraft");
+            .set("OriginalFilename", "livi-cut.exe")
+            .set("InternalName", "livi-cut");
         if let Err(e) = res.compile() {
             if std::env::var_os("FILMCRAFT_REQUIRE_WINRES").is_some() {
                 panic!("embedding Windows resources failed: {e}");
             }
-            println!("cargo:warning=filmcraft.exe built without icon/version resources: {e}");
+            println!("cargo:warning=livi-cut.exe built without icon/version resources: {e}");
         }
     }
 }
@@ -38,6 +38,6 @@ mod windows {
 #[cfg(not(windows))]
 mod windows {
     pub fn embed_resources() {
-        println!("cargo:warning=filmcraft.exe built without icon/version resources (cross-compiled from a non-Windows host)");
+        println!("cargo:warning=livi-cut.exe built without icon/version resources (cross-compiled from a non-Windows host)");
     }
 }

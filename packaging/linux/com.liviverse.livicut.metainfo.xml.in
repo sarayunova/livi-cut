@@ -51,7 +51,7 @@
     <control>tablet</control>
   </supports>
   <provides>
-    <binary>filmcraft</binary>
+    <binary>livi-cut</binary>
     <mediatype>application/x-filmcraft</mediatype>
   </provides>
   <content_rating type="oars-1.1"/>

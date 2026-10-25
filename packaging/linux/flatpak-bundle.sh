@@ -10,7 +10,7 @@
 # Needs flatpak, flatpak-builder and the SVG pixbuf loader (librsvg2-common) for the host's
 # `appstreamcli compose`; the freedesktop runtime and SDK named in the manifest are
 # installed per-user from Flathub. Unless --no-test, the bundle is then installed per-user and
-# `filmcraft-cli --version` is run inside the sandbox as a smoke test.
+# `livi-cut-cli --version` is run inside the sandbox as a smoke test.
 # Manifest: packaging/linux/flatpak/com.liviverse.livicut.bundle.yml.
 set -euo pipefail
 # shellcheck source=../env.sh
@@ -49,7 +49,7 @@ WORK="$CARGO_TARGET_DIR/flatpak-bundle"
 rm -rf "$WORK"
 mkdir -p "$WORK/stage"
 tar -xzf "$TARBALL" -C "$WORK/stage" --strip-components=1
-[[ -x "$WORK/stage/bin/filmcraft" ]] || { echo "error: $TARBALL has no bin/filmcraft" >&2; exit 1; }
+[[ -x "$WORK/stage/bin/livi-cut" ]] || { echo "error: $TARBALL has no bin/livi-cut" >&2; exit 1; }
 cp "$HERE/flatpak/$APP_ID.bundle.yml" "$WORK/$APP_ID.yml"
 
 flatpak remote-add --user --if-not-exists flathub "$FLATHUB"
@@ -65,7 +65,7 @@ echo "wrote $OUT"
 if [[ "$TEST" = 1 ]]; then
   flatpak install --user -y --noninteractive --reinstall "$OUT"
   flatpak info --user "$APP_ID"
-  flatpak run --command=filmcraft-cli "$APP_ID" --version
+  flatpak run --command=livi-cut-cli "$APP_ID" --version
   flatpak run --command=sh "$APP_ID" -c 'ls /app/share/applications /app/share/metainfo /app/share/mime/packages /app/share/icons/hicolor/scalable/apps'
 fi
 echo "==> done"
