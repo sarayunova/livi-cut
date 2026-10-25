@@ -132,6 +132,9 @@ mod linux {
                     let rbsp = parameter_set(&info.parameter_sets, 1, |h| h & 0x1f == 7).ok_or("no SPS")?;
                     let sps = filmcraft_h264::params::Sps::parse(&rbsp).map_err(|e| e.to_string())?;
                     sps.check_supported().map_err(|e| e.to_string())?;
+                    if !sps.is_8bit_420() {
+                        return Err("H.264 other than 8-bit 4:2:0 is not taken".into());
+                    }
                     let mbs = (sps.pic_width_in_mbs, sps.frame_height_in_mbs());
                     // the DPB, the picture being decoded, and one spare
                     let count = sps.max_dpb_frames().saturating_add(2).min(18);

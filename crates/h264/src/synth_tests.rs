@@ -427,7 +427,10 @@ fn build_and_check(cabac: bool, threads: usize) {
     assert_eq!(out.len(), expected.len(), "cabac={cabac}");
     for (i, (p, e)) in out.iter().zip(expected.iter()).enumerate() {
         assert_eq!((p.width as usize, p.height as usize), (MB_W * 16, MB_H * 16));
-        assert!(p.y == e.0 && p.u == e.1 && p.v == e.2, "picture {i} differs (cabac={cabac}, threads={threads})");
+        assert!(
+            p.y.as_u8() == Some(&e.0[..]) && p.u.as_u8() == Some(&e.1[..]) && p.v.as_u8() == Some(&e.2[..]),
+            "picture {i} differs (cabac={cabac}, threads={threads})"
+        );
     }
     let s = dec.stats();
     assert!(s.mb_pcm > 0 && s.frame_num_gaps == 1 && s.long_term_marks >= 3, "{s:?}");
@@ -515,7 +518,10 @@ fn weighted_check(cabac: bool, threads: usize) {
     assert!(dec.take_error().is_none());
     assert_eq!(out.len(), 4);
     for (i, (p, e)) in out.iter().zip(expected.iter()).enumerate() {
-        assert!(p.y == e.0 && p.u == e.1 && p.v == e.2, "picture {i} differs (cabac={cabac}, threads={threads})");
+        assert!(
+            p.y.as_u8() == Some(&e.0[..]) && p.u.as_u8() == Some(&e.1[..]) && p.v.as_u8() == Some(&e.2[..]),
+            "picture {i} differs (cabac={cabac}, threads={threads})"
+        );
     }
 }
 
@@ -551,8 +557,80 @@ fn poc_type1_reordering() {
             for (k, p) in out.iter().enumerate() {
                 let e = render(&contents[expected_order[k]], None);
                 assert_eq!(p.poc, expected_poc[k]);
-                assert!(p.y == e.0 && p.u == e.1 && p.v == e.2, "output {k} (cabac={cabac})");
+                assert!(p.y.as_u8() == Some(&e.0[..]) && p.u.as_u8() == Some(&e.1[..]) && p.v.as_u8() == Some(&e.2[..]), "output {k} (cabac={cabac})");
             }
         }
+    }
+}
+
+/// SPS of a High-family profile with the given chroma format and bit depth (otherwise as [`sps`]
+/// with POC type 2 and one reference frame).
+fn sps_high(profile: u8, chroma_format_idc: u32, bit_depth: u32) -> Vec<u8> {
+    let mut w = BitWriter::new();
+    w.write_bits(profile as u32, 8);
+    w.write_bits(0, 8);
+    w.write_bits(30, 8);
+    w.write_ue(0); // sps id
+    w.write_ue(chroma_format_idc);
+    w.write_ue(bit_depth - 8); // luma
+    w.write_ue(bit_depth - 8); // chroma
+    w.write_bit(false); // qpprime_y_zero_transform_bypass
+    w.write_bit(false); // seq_scaling_matrix_present
+    w.write_ue(0); // log2_max_frame_num - 4
+    w.write_ue(2); // pic_order_cnt_type
+    w.write_ue(1); // max_num_ref_frames
+    w.write_bit(false);
+    w.write_ue(MB_W as u32 - 1);
+    w.write_ue(MB_H as u32 - 1);
+    w.write_bit(true); // frame_mbs_only
+    w.write_bit(true); // direct_8x8_inference
+    w.write_bit(false); // cropping
+    w.write_bit(false); // vui
+    w.rbsp_trailing();
+    nal(3, 7, &w.finish())
+}
+
+/// I_PCM at high bit depth (High 4:2:2, 10-bit 4:2:2): each macroblock carries 256 luma and
+/// 2 x 8 x 16 chroma samples of 10 bits, which come out exactly, with CAVLC and CABAC.
+#[test]
+fn pcm_10bit_422() {
+    for cabac in [false, true] {
+        let mut seed = 99u32;
+        let mut next = || {
+            seed = seed.wrapping_mul(1664525).wrapping_add(1013904223);
+            (seed >> 22) as u16
+        };
+        let samples: Vec<Vec<u16>> = (0..NMB).map(|_| (0..512).map(|_| next()).collect()).collect();
+        let pack = |s: &[u16]| {
+            let mut w = BitWriter::new();
+            for &v in s {
+                w.write_bits(v as u32, 10);
+            }
+            w.finish()
+        };
+        let pic = Pic { idr: true, ref_idc: 3, mbs: samples.iter().map(|s| Some(pack(s))).collect(), ..Default::default() };
+        let mut stream = sps_high(122, 2, 10);
+        stream.extend(pps(cabac, false));
+        stream.extend(slice_nal(&pic, cabac));
+        let mut dec = Decoder::with_threads(1);
+        let mut out = dec.decode(&stream, 0).unwrap();
+        out.extend(dec.flush());
+        assert!(dec.take_error().is_none());
+        assert_eq!(out.len(), 1, "cabac={cabac}");
+        let p = &out[0];
+        let (w, h) = (MB_W * 16, MB_H * 16);
+        assert_eq!((p.bit_depth, p.chroma_format, p.chroma_width as usize, p.chroma_height as usize), (10, 2, w / 2, h));
+        let (mut y, mut u, mut v) = (vec![0u16; w * h], vec![0u16; w / 2 * h], vec![0u16; w / 2 * h]);
+        for (i, s) in samples.iter().enumerate() {
+            let (x0, y0) = ((i % MB_W) * 16, (i / MB_W) * 16);
+            for r in 0..16 {
+                y[(y0 + r) * w + x0..(y0 + r) * w + x0 + 16].copy_from_slice(&s[r * 16..r * 16 + 16]);
+                for (c, plane) in [&mut u, &mut v].into_iter().enumerate() {
+                    let o = 256 + c * 128 + r * 8;
+                    plane[(y0 + r) * w / 2 + x0 / 2..(y0 + r) * w / 2 + x0 / 2 + 8].copy_from_slice(&s[o..o + 8]);
+                }
+            }
+        }
+        assert!(p.y.as_u16() == Some(&y[..]) && p.u.as_u16() == Some(&u[..]) && p.v.as_u16() == Some(&v[..]), "cabac={cabac}");
     }
 }

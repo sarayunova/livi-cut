@@ -35,9 +35,13 @@ fn main() {
         for p in pics {
             n += 1;
             if let Some(o) = out.as_mut() {
-                o.write_all(&p.y).unwrap();
-                o.write_all(&p.u).unwrap();
-                o.write_all(&p.v).unwrap();
+                // raw planes: bytes at 8 bits, little-endian 16-bit words above
+                for plane in [&p.y, &p.u, &p.v] {
+                    match plane {
+                        filmcraft_h264::Plane::U8(v) => o.write_all(v).unwrap(),
+                        filmcraft_h264::Plane::U16(v) => o.write_all(&v.iter().flat_map(|s| s.to_le_bytes()).collect::<Vec<u8>>()).unwrap(),
+                    }
+                }
             }
         }
     };

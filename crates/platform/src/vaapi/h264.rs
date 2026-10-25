@@ -185,6 +185,10 @@ impl<A: Accel> Front<A> {
         .map_err(decode_err)?;
         let Some((pps, sps)) = found else { return Err(decode_err("slice without a PPS")) };
         sps.check_supported().map_err(decode_err)?;
+        if !sps.is_8bit_420() {
+            // the software decoder takes High 10 and 4:2:2; this path only 8-bit 4:2:0
+            return Err(unsupported("H.264 other than 8-bit 4:2:0"));
+        }
         if pps.num_slice_groups > 1 {
             return Err(unsupported("slice groups (FMO)"));
         }

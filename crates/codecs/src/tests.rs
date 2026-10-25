@@ -340,6 +340,57 @@ fn check_vp9_seeks(name: &str, container: &str, pix_fmt: &str, extra: &[&str], f
     }
 }
 
+/// High 10 / High 4:2:2 H.264 (libx264) in MP4 / QuickTime: random access through the software
+/// decoder is sample-exact against ffmpeg, and frames come out as 10-bit `Yuv16` with the
+/// stream's chroma subsampling.
+fn check_h264_high_bit_depth_seeks(name: &str, container: &str, profile: &str, pix_fmt: &str, chroma: filmcraft_frame::Chroma) {
+    let frames = 40;
+    let n = frames.to_string();
+    let args = [
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc2=s=352x288:r=25,noise=alls=8:allf=t",
+        "-frames:v",
+        &n,
+        "-c:v",
+        "libx264",
+        "-profile:v",
+        profile,
+        "-pix_fmt",
+        pix_fmt,
+        "-x264-params",
+        "keyint=16:bframes=3",
+    ];
+    let Some(path) = fixture_path(name, &args) else { return };
+    let Some(reference) = reference_yuv(&path, pix_fmt) else { return };
+    let bytes: Arc<[u8]> = std::fs::read(&path).unwrap().into();
+    let src = crate::open_bytes(name, bytes).unwrap();
+    let info = src.info().clone();
+    assert_eq!(info.container, container);
+    let v = info.video.as_ref().unwrap();
+    assert!(v.codec.contains("H.264"), "{}", v.codec);
+    let frame_len = reference.len() / frames;
+    let rate = info.frame_rate();
+    for k in [frames - 1, 2, 17, 0, 5, 33, 16, 15, 3, frames - 2] {
+        let f = src.video_frame(FrameRequest::full(rate.tick_of(k as i64))).unwrap();
+        assert_eq!((f.width, f.height), (352, 288));
+        let filmcraft_frame::PixelData::Yuv16 { chroma: c, bits, .. } = &f.data else { panic!("{name}: frame {k} is {}", f.format_label()) };
+        assert_eq!((*c, *bits), (chroma, 10), "{name}: frame {k}");
+        assert!(yuv_bytes(&f) == reference[k * frame_len..(k + 1) * frame_len], "{name}: frame {k} differs from ffmpeg");
+    }
+}
+
+#[test]
+fn mp4_h264_high10_seeks_bit_exact() {
+    check_h264_high_bit_depth_seeks("noise_h264_high10.mp4", "MPEG-4", "high10", "yuv420p10le", filmcraft_frame::Chroma::C420);
+}
+
+#[test]
+fn mov_h264_high422_10bit_seeks_bit_exact() {
+    check_h264_high_bit_depth_seeks("noise_h264_high422.mov", "QuickTime", "high422", "yuv422p10le", filmcraft_frame::Chroma::C422);
+}
+
 /// AV1 (libsvtav1) in MP4 / WebM: random access is sample-exact against libdav1d. `keyint`
 /// "1" is all-intra; larger values give hierarchical inter GOPs (hidden ALTREFs, shown-existing
 /// frames), so seeks decode forward from the previous key frame.

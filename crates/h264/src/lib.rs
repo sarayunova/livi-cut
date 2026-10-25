@@ -1,6 +1,7 @@
 //! Clean-room pure-Rust H.264 / AVC decoder, implemented from ITU-T Rec. H.264 (ISO/IEC 14496-10).
 //!
-//! Supported: progressive (frame) coding, 8-bit 4:2:0, Baseline / Main / High profiles — CAVLC and CABAC,
+//! Supported: progressive (frame) coding, 8- to 10-bit 4:2:0 and 4:2:2: Baseline / Main / High / High 10 /
+//! High 4:2:2 profiles (and their Intra variants) — CAVLC and CABAC,
 //! I/P/B slices, 8x8 transform, custom scaling matrices, weighted prediction, spatial/temporal direct,
 //! multiple slices, long-term references and all MMCOs, deblocking.
 //!
@@ -36,6 +37,7 @@ mod mbtypes;
 pub mod params;
 mod picture;
 pub use picture::set_plane_allocator;
+mod sample;
 pub mod slice;
 mod slicedec;
 #[cfg(test)]
@@ -56,7 +58,47 @@ pub struct ColorInfo {
     pub matrix: u8,
 }
 
-/// A decoded, cropped picture in 8-bit planar 4:2:0.
+/// Samples of one plane: `u8` for 8-bit streams, `u16` (low bits) for 9- and 10-bit ones.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Plane {
+    U8(Vec<u8>),
+    U16(Vec<u16>),
+}
+
+impl Plane {
+    pub fn len(&self) -> usize {
+        match self {
+            Plane::U8(v) => v.len(),
+            Plane::U16(v) => v.len(),
+        }
+    }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+    /// Sample `i` (0 when out of range).
+    pub fn get(&self, i: usize) -> u16 {
+        match self {
+            Plane::U8(v) => v.get(i).map_or(0, |&s| s.into()),
+            Plane::U16(v) => v.get(i).copied().unwrap_or(0),
+        }
+    }
+    /// The 8-bit samples (`None` for a high bit depth plane).
+    pub fn as_u8(&self) -> Option<&[u8]> {
+        match self {
+            Plane::U8(v) => Some(v),
+            Plane::U16(_) => None,
+        }
+    }
+    /// The high bit depth samples (`None` for an 8-bit plane).
+    pub fn as_u16(&self) -> Option<&[u16]> {
+        match self {
+            Plane::U16(v) => Some(v),
+            Plane::U8(_) => None,
+        }
+    }
+}
+
+/// A decoded, cropped picture in planar 4:2:0 or 4:2:2.
 #[derive(Clone, Debug)]
 pub struct Picture {
     /// Cropped luma width.
@@ -65,9 +107,14 @@ pub struct Picture {
     pub height: u32,
     pub chroma_width: u32,
     pub chroma_height: u32,
-    pub y: Vec<u8>,
-    pub u: Vec<u8>,
-    pub v: Vec<u8>,
+    /// Bit depth of luma and chroma (8, 9 or 10); above 8 the planes are [`Plane::U16`].
+    pub bit_depth: u32,
+    /// chroma_format_idc: 1 = 4:2:0, 2 = 4:2:2.
+    pub chroma_format: u32,
+    pub y: Plane,
+    pub u: Plane,
+    pub v: Plane,
+    /// Strides in samples.
     pub y_stride: usize,
     pub uv_stride: usize,
     /// Presentation timestamp passed to [`Decoder::decode`] with the access unit of this picture.

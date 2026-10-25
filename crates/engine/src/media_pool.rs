@@ -503,7 +503,7 @@ impl MediaSource for SlateSource {
 }
 
 /// A file's source whose picture shows the unreadable slate for each frame its decoder reports as
-/// unsupported (H.264 High 4:2:2, a codec without a decoder...), instead of no picture at all,
+/// unsupported (H.264 4:4:4, HEVC 4:2:2, a codec without a decoder...), instead of no picture at all,
 /// and marks the item unreadable with the reason, so the monitors and the Project panel say why
 /// (#626). Its sound plays as before.
 struct UnsupportedAsSlate {

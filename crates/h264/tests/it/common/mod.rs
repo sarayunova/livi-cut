@@ -20,8 +20,28 @@ pub struct Fixture {
     pub frames: u32,
     /// Extra video filter appended after the source (e.g. noise, fade).
     pub filter: &'static str,
-    /// Encoder arguments.
+    /// Encoder arguments; a `-pix_fmt` among them sets the fixture's sample format.
     pub args: &'static [&'static str],
+}
+
+impl Fixture {
+    /// Raw sample format of the source and the reference decode (`yuv420p` unless the
+    /// arguments name another one).
+    pub fn pix_fmt(&self) -> &'static str {
+        self.args.iter().position(|&a| a == "-pix_fmt").and_then(|i| self.args.get(i + 1)).copied().unwrap_or("yuv420p")
+    }
+}
+
+/// Layout of a raw reference format: bytes per sample and whether chroma has full height (4:2:2).
+pub fn raw_layout(pix_fmt: &str) -> (usize, bool) {
+    (if pix_fmt.ends_with("10le") { 2 } else { 1 }, pix_fmt.starts_with("yuv422"))
+}
+
+/// Size in bytes of one raw w x h frame.
+pub fn raw_frame_size(pix_fmt: &str, w: usize, h: usize) -> usize {
+    let (bps, c422) = raw_layout(pix_fmt);
+    let ch = if c422 { h } else { h.div_ceil(2) };
+    bps * (w * h + 2 * w.div_ceil(2) * ch)
 }
 
 const NOISE: &str = "noise=alls=12:allf=t+u";
@@ -306,6 +326,134 @@ pub const FIXTURES: &[Fixture] = &[
         filter: NOISE,
         args: &["-profile:v", "main", "-qp", "1", "-x264-params", "cabac=0"],
     },
+    // High 10 (4:2:0) and High 4:2:2 (10-bit): intra-only and inter, CAVLC and CABAC, with
+    // weighted prediction, I_PCM-free lossy coding at low and high QP
+    Fixture {
+        name: "high10_intra",
+        source: "testsrc2",
+        width: 352,
+        height: 288,
+        frames: 3,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv420p10le", "-profile:v", "high10", "-x264-params", "keyint=1"],
+    },
+    Fixture {
+        name: "high10_cavlc_intra",
+        source: "testsrc2",
+        width: 352,
+        height: 288,
+        frames: 3,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv420p10le", "-profile:v", "high10", "-x264-params", "keyint=1:cabac=0"],
+    },
+    Fixture {
+        name: "high10_b",
+        source: "testsrc2",
+        width: 352,
+        height: 288,
+        frames: 30,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv420p10le", "-profile:v", "high10", "-x264-params", "bframes=3:b-pyramid=normal:ref=3"],
+    },
+    Fixture {
+        name: "high10_cavlc_b",
+        source: "mandelbrot",
+        width: 352,
+        height: 288,
+        frames: 30,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv420p10le", "-profile:v", "high10", "-x264-params", "cabac=0:bframes=3:direct=temporal"],
+    },
+    Fixture {
+        name: "high10_weightp",
+        source: "testsrc2",
+        width: 352,
+        height: 288,
+        frames: 30,
+        filter: "fade=in:0:25",
+        args: &["-pix_fmt", "yuv420p10le", "-profile:v", "high10", "-x264-params", "weightp=2:weightb=1:bframes=2"],
+    },
+    Fixture {
+        name: "high10_qp1",
+        source: "mandelbrot",
+        width: 176,
+        height: 144,
+        frames: 10,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv420p10le", "-profile:v", "high10", "-qp", "1"],
+    },
+    Fixture {
+        name: "high10_qp60",
+        source: "testsrc2",
+        width: 352,
+        height: 288,
+        frames: 10,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv420p10le", "-profile:v", "high10", "-qp", "60"],
+    },
+    Fixture {
+        name: "high10_cqm_crop",
+        source: "testsrc2",
+        width: 350,
+        height: 286,
+        frames: 10,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv420p10le", "-profile:v", "high10", "-x264-params", "cqm=jvt:chroma-qp-offset=-3"],
+    },
+    Fixture {
+        name: "high422_intra",
+        source: "testsrc2",
+        width: 352,
+        height: 288,
+        frames: 3,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv422p10le", "-profile:v", "high422", "-x264-params", "keyint=1"],
+    },
+    Fixture {
+        name: "high422_cavlc_intra",
+        source: "smptehdbars",
+        width: 352,
+        height: 288,
+        frames: 3,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv422p10le", "-profile:v", "high422", "-x264-params", "keyint=1:cabac=0"],
+    },
+    Fixture {
+        name: "high422_b",
+        source: "testsrc2",
+        width: 352,
+        height: 288,
+        frames: 30,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv422p10le", "-profile:v", "high422", "-x264-params", "bframes=3:weightb=1:weightp=2"],
+    },
+    Fixture {
+        name: "high422_cavlc_b",
+        source: "mandelbrot",
+        width: 352,
+        height: 288,
+        frames: 30,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv422p10le", "-profile:v", "high422", "-x264-params", "cabac=0:bframes=3:8x8dct=1"],
+    },
+    Fixture {
+        name: "high422_8bit",
+        source: "testsrc2",
+        width: 352,
+        height: 288,
+        frames: 20,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv422p", "-profile:v", "high422", "-x264-params", "bframes=2"],
+    },
+    Fixture {
+        name: "high422_qp55",
+        source: "smptehdbars",
+        width: 352,
+        height: 288,
+        frames: 10,
+        filter: NOISE,
+        args: &["-pix_fmt", "yuv422p10le", "-profile:v", "high422", "-qp", "55"],
+    },
 ];
 
 pub fn fixture(name: &str) -> &'static Fixture {
@@ -345,7 +493,7 @@ pub fn ensure(f: &Fixture) -> Option<(PathBuf, PathBuf)> {
     let yuv = dir.join(format!("{}.yuv", f.name));
     if !h264.exists() {
         let tmp = filmcraft_testkit::temp_path(&h264);
-        let mut vf = format!("{}=size={}x{}:rate=25,format=yuv420p", f.source, f.width, f.height);
+        let mut vf = format!("{}=size={}x{}:rate=25,format={}", f.source, f.width, f.height, f.pix_fmt());
         if !f.filter.is_empty() {
             vf.push(',');
             vf.push_str(f.filter);
@@ -370,7 +518,7 @@ pub fn ensure(f: &Fixture) -> Option<(PathBuf, PathBuf)> {
         let tmp = filmcraft_testkit::temp_path(&yuv);
         let mut c = Command::new(&ff);
         c.args(["-hide_banner", "-loglevel", "error", "-y", "-i"]).arg(&h264);
-        c.args(["-fps_mode", "passthrough", "-f", "rawvideo", "-pix_fmt", "yuv420p"]).arg(&tmp);
+        c.args(["-fps_mode", "passthrough", "-f", "rawvideo", "-pix_fmt", f.pix_fmt()]).arg(&tmp);
         assert!(run(&mut c), "reference decode failed for {}", f.name);
         std::fs::rename(&tmp, &yuv).unwrap();
     }
@@ -453,9 +601,22 @@ pub fn decode_file_opts(path: &Path, threads: usize, draft: bool) -> Result<Vec<
 
 /// Compare decoded pictures with a raw yuv420p reference; returns a diagnostic on the first mismatch.
 pub fn compare(pics: &[Picture], reference: &[u8], w: usize, h: usize) -> Result<(), String> {
-    let (cw, ch) = (w.div_ceil(2), h.div_ceil(2));
-    let fsize = w * h + 2 * cw * ch;
+    compare_fmt(pics, reference, w, h, "yuv420p")
+}
+
+/// Sample `i` of a raw plane of `bps` bytes per sample (little-endian).
+fn raw_sample(plane: &[u8], i: usize, bps: usize) -> u16 {
+    if bps == 2 { u16::from_le_bytes([plane[2 * i], plane[2 * i + 1]]) } else { plane[i] as u16 }
+}
+
+/// Compare decoded pictures with a raw reference in `pix_fmt` (yuv420p, yuv420p10le, yuv422p or
+/// yuv422p10le); returns a diagnostic on the first mismatch.
+pub fn compare_fmt(pics: &[Picture], reference: &[u8], w: usize, h: usize, pix_fmt: &str) -> Result<(), String> {
+    let (bps, c422) = raw_layout(pix_fmt);
+    let (cw, ch) = (w.div_ceil(2), if c422 { h } else { h.div_ceil(2) });
+    let fsize = raw_frame_size(pix_fmt, w, h);
     let nref = reference.len() / fsize;
+    let want_bits = if bps == 2 { 10 } else { 8 };
     for (i, p) in pics.iter().enumerate() {
         if i >= nref {
             return Err(format!("decoder produced {} frames, reference has {}", pics.len(), nref));
@@ -463,17 +624,21 @@ pub fn compare(pics: &[Picture], reference: &[u8], w: usize, h: usize) -> Result
         if p.width as usize != w || p.height as usize != h {
             return Err(format!("frame {i}: size {}x{} != {}x{}", p.width, p.height, w, h));
         }
+        if p.bit_depth != want_bits || p.chroma_format != if c422 { 2 } else { 1 } {
+            return Err(format!("frame {i}: {}-bit chroma format {} for a {pix_fmt} reference", p.bit_depth, p.chroma_format));
+        }
         let f = &reference[i * fsize..(i + 1) * fsize];
-        let planes =
-            [("Y", &p.y[..], &f[..w * h], w, h, 16), ("U", &p.u[..], &f[w * h..w * h + cw * ch], cw, ch, 8), ("V", &p.v[..], &f[w * h + cw * ch..], cw, ch, 8)];
+        let (ys, cs) = (w * h * bps, cw * ch * bps);
+        let cmb = if c422 { 16 } else { 8 };
+        let planes = [("Y", &p.y, &f[..ys], w, h, 16), ("U", &p.u, &f[ys..ys + cs], cw, ch, cmb), ("V", &p.v, &f[ys + cs..], cw, ch, cmb)];
         for (name, got, exp, pw, ph, mbs) in planes {
-            if got != exp {
+            if got.len() != pw * ph || (0..pw * ph).any(|k| got.get(k) != raw_sample(exp, k, bps)) {
                 let mut first = None;
                 let mut count = 0usize;
                 let mut maxd = 0i32;
                 for y in 0..ph {
                     for x in 0..pw {
-                        let (a, b) = (got[y * pw + x], exp[y * pw + x]);
+                        let (a, b) = (got.get(y * pw + x), raw_sample(exp, y * pw + x, bps));
                         if a != b {
                             count += 1;
                             maxd = maxd.max((a as i32 - b as i32).abs());
@@ -483,14 +648,15 @@ pub fn compare(pics: &[Picture], reference: &[u8], w: usize, h: usize) -> Result
                         }
                     }
                 }
-                let (x, y, a, b) = first.unwrap();
-                let mb_w = pw.div_ceil(mbs);
+                let (x, y, a, b) = first.unwrap_or((0, 0, 0, 0));
+                let mbs_x = if name == "Y" { 16 } else { 8 };
+                let mb_w = pw.div_ceil(mbs_x);
                 return Err(format!(
                     "frame {i} (poc {}, pts {}) plane {name}: first mismatch at ({x},{y}) MB {} (mb_x {}, mb_y {}): got {a} want {b}; {count} samples differ, max diff {maxd}",
                     p.poc,
                     p.pts,
-                    (y / mbs) * mb_w + x / mbs,
-                    x / mbs,
+                    (y / mbs) * mb_w + x / mbs_x,
+                    x / mbs_x,
                     y / mbs
                 ));
             }
@@ -514,11 +680,11 @@ pub fn check_fixture(name: &str) -> Result<bool, String> {
             Ok(p) => p,
             Err((au, e, partial)) => {
                 // still report comparison of what was decoded
-                let cmp = compare(&partial, &reference, f.width as usize, f.height as usize).err().unwrap_or_default();
+                let cmp = compare_fmt(&partial, &reference, f.width as usize, f.height as usize, f.pix_fmt()).err().unwrap_or_default();
                 return Err(format!("{name} (threads {threads}): decode error at access unit {au}: {e} (after {} pictures) {cmp}", partial.len()));
             }
         };
-        compare(&pics, &reference, f.width as usize, f.height as usize).map_err(|e| format!("{name} (threads {threads}): {e}"))?;
+        compare_fmt(&pics, &reference, f.width as usize, f.height as usize, f.pix_fmt()).map_err(|e| format!("{name} (threads {threads}): {e}"))?;
         if pics.iter().any(|p| p.draft) {
             return Err(format!("{name} (threads {threads}): draft picture without draft mode"));
         }

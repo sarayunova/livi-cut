@@ -50,6 +50,20 @@ fixture_tests!(
     no8x8dct,
     qp50,
     qp1,
+    high10_intra,
+    high10_cavlc_intra,
+    high10_b,
+    high10_cavlc_b,
+    high10_weightp,
+    high10_qp1,
+    high10_qp60,
+    high10_cqm_crop,
+    high422_intra,
+    high422_cavlc_intra,
+    high422_b,
+    high422_cavlc_b,
+    high422_8bit,
+    high422_qp55,
     vt_high,
     vt_main,
     vt_baseline,
@@ -78,7 +92,8 @@ fn draft_mode_changes_only_flagged_non_reference_pictures() {
             let (mut draft, mut changed) = (0, 0);
             for (i, p) in pics.iter().enumerate() {
                 let r = &reference[i * fsize..(i + 1) * fsize];
-                let same = p.y == r[..w * h] && [&p.u[..], &p.v[..]].concat() == r[w * h..];
+                let (Some(y), Some(u), Some(v)) = (p.y.as_u8(), p.u.as_u8(), p.v.as_u8()) else { panic!("{name}: 8-bit planes") };
+                let same = *y == r[..w * h] && [u, v].concat() == r[w * h..];
                 if p.draft {
                     draft += 1;
                     changed += !same as usize;

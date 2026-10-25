@@ -515,20 +515,35 @@ impl Sps {
         self.max_dpb_frames()
     }
 
+    /// Whether the software decoder handles this sequence: progressive, 4:2:0 or 4:2:2, luma and
+    /// chroma of the same bit depth from 8 to 10, no lossless macroblocks.
     pub fn check_supported(&self) -> Result<()> {
         if !self.frame_mbs_only {
             return unsupported("interlaced (field / MBAFF) coding");
         }
-        if self.chroma_array_type() != 1 {
-            return unsupported(format!("chroma_format_idc {} (only 4:2:0 is implemented)", self.chroma_format_idc));
+        if !matches!(self.chroma_array_type(), 1 | 2) {
+            return unsupported(format!("chroma_format_idc {} (4:2:0 and 4:2:2 are implemented)", self.chroma_format_idc));
         }
-        if self.bit_depth_luma != 8 || self.bit_depth_chroma != 8 {
-            return unsupported(format!("bit depth luma {} chroma {} (only 8-bit is implemented)", self.bit_depth_luma, self.bit_depth_chroma));
+        if self.bit_depth_luma != self.bit_depth_chroma || self.bit_depth_luma > 10 {
+            return unsupported(format!(
+                "bit depth luma {} chroma {} (8 to 10 bits, the same for both, are implemented)",
+                self.bit_depth_luma, self.bit_depth_chroma
+            ));
         }
         if self.qpprime_y_zero_transform_bypass {
             return unsupported("qpprime_y_zero_transform_bypass (lossless)");
         }
         Ok(())
+    }
+
+    /// 8-bit 4:2:0, the only format the VA-API decoding path takes.
+    pub fn is_8bit_420(&self) -> bool {
+        self.chroma_array_type() == 1 && self.bit_depth_luma == 8 && self.bit_depth_chroma == 8
+    }
+
+    /// QpBdOffsetY = 6 * (BitDepthY - 8).
+    pub fn qp_bd_offset(&self) -> i32 {
+        6 * self.bit_depth_luma.saturating_sub(8) as i32
     }
 }
 

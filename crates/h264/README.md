@@ -13,26 +13,37 @@ oracles and fixture generators.
 
 ## Supported
 
+- Profiles: Constrained Baseline / Baseline, Main, High, High 10 and High 4:2:2 (and their Intra
+  variants): 4:2:0 and 4:2:2, 8 to 10 bits (luma and chroma of the same depth).
 - NAL units: Annex-B byte streams and length-prefixed (`avcC`) samples; SPS (all fields incl.
   VUI/HRD, scaling lists with fall-back rules A/B, cropping, high-profile fields), PPS (incl.
   `transform_8x8_mode`, scaling lists, slice groups parsed), SEI / AUD / filler skipped.
 - Slice header: all fields incl. reference list modification, prediction weight table and
   decoded reference picture marking. POC types 0, 1, 2. `frame_num` gap handling ("non-existing"
   frames).
-- Entropy coding: CAVLC and CABAC (all syntax elements needed for frame coding, 4:2:0).
+- Entropy coding: CAVLC and CABAC (all syntax elements needed for frame coding, 4:2:0 and 4:2:2;
+  the 2x4 chroma DC with nC = -2 tables and `NumC8x8` = 2 context selection).
 - Macroblocks: I (Intra 4x4 / 8x8 / 16x16, I_PCM), P (all partitions, P_8x8ref0, P_Skip),
   B (all partitions and sub-partitions, B_Skip, B_Direct_16x16, B_Direct_8x8), spatial and temporal
   direct prediction with/without `direct_8x8_inference`, constrained intra prediction.
-- Transforms / quantisation: 4x4, 8x8, Intra16x16 DC Hadamard, 2x2 chroma DC; flat and custom
-  scaling matrices (SPS and PPS level).
-- Inter prediction: quarter-sample 6-tap luma, eighth-sample chroma, explicit and implicit weighted
-  prediction, multiple reference frames, long-term references.
+- Transforms / quantisation: 4x4, 8x8, Intra16x16 DC Hadamard, 2x2 (4:2:0) and 2x4 (4:2:2, QP'C + 3)
+  chroma DC; flat and custom scaling matrices (SPS and PPS level); `QpBdOffset` in every QP
+  derivation (QPY down to -12 at 10 bits, `mb_qp_delta` range and wrap).
+- Intra prediction: all modes, 8x8 and 8x16 (4:2:2) chroma including the 4:2:2 DC and plane rules;
+  unavailable neighbours at the bit depth's mid level.
+- Inter prediction: quarter-sample 6-tap luma, eighth-sample chroma (4:2:2: full-height chroma with
+  quarter-sample vertical vectors), explicit (offsets scaled to the bit depth) and implicit
+  weighted prediction, multiple reference frames, long-term references.
+- I_PCM at any bit depth (BitDepth bits per sample, MbHeightC chroma rows).
 - DPB: sliding window, all MMCOs (1-6), IDR / `no_output_of_prior_pics`, bumping with DPB size from
   the level (or VUI `max_dec_frame_buffering`) and `max_num_reorder_frames`.
 - Deblocking filter: full bS derivation, `disable_deblocking_filter_idc` 0/1/2, slice offsets,
-  8x8-transform edges.
-- Output: cropped 8-bit planar 4:2:0 pictures in output order with the caller's `pts`, POC, key
-  flag, VUI colour description (range, primaries, transfer, matrix) and sample aspect ratio.
+  8x8-transform edges; alpha / beta / tC0 scaled to the bit depth; the four horizontal chroma
+  edges of 4:2:2 (bS of the luma edge at the same row, also where the 8x8 transform leaves that luma
+  edge unfiltered).
+- Output: cropped planar 4:2:0 or 4:2:2 pictures in output order (`Plane::U8` at 8 bits,
+  `Plane::U16` above; `Picture::bit_depth`, `Picture::chroma_format`) with the caller's `pts`, POC,
+  key flag, VUI colour description (range, primaries, transfer, matrix) and sample aspect ratio.
 - Frame-level multithreading (see below).
 - Draft mode for reduced-resolution playback (off by default): non-reference pictures skip the
   deblocking filter and are flagged `Picture::draft`; every other picture stays bit-exact.
@@ -103,21 +114,24 @@ with ffmpeg + libx264; tests print a message and skip when `/opt/homebrew/bin/ff
   values, transforms, luma interpolation against a straightforward reference implementation,
   weighting, macroblock type tables, scaling-list parsing.
 - Synthetic streams (`src/synth_tests.rs`): hand-built CAVLC and CABAC bitstreams covering what
-  libx264 never produces — I_PCM, long-term references, MMCO 1-6, `frame_num` gaps, reference list
+  libx264 never produces — I_PCM (also 10-bit 4:2:2), long-term references, MMCO 1-6, `frame_num` gaps, reference list
   modification (short- and long-term), explicit weighted prediction in P and B slices, B_Skip with
   explicit bi-prediction. The expected output is known exactly and is also checked against ffmpeg.
 - Robustness: avcC input with pts round trip; randomly corrupted, truncated and garbage input never
   panics or deadlocks (single- and multi-threaded).
 - Conformance (`tests/it/conformance.rs`): every fixture is decoded single-threaded, with 3 threads
-  and with every core, and compared byte-for-byte with `ffmpeg -f rawvideo -pix_fmt yuv420p`; on
-  mismatch the first differing frame, plane, sample position and macroblock are reported. Output
+  and with every core, and compared sample-for-sample with `ffmpeg -f rawvideo` in the fixture's
+  format (`yuv420p`, `yuv420p10le`, `yuv422p` or `yuv422p10le`; the picture's bit depth and chroma
+  format must match too); on mismatch the first differing frame, plane, sample position and
+  macroblock are reported. Output
   pts/POC order is checked too, and that no picture is flagged draft without draft mode. Draft
   mode (`draft_mode_changes_only_flagged_non_reference_pictures`): on five B-pyramid / B-frame
   fixtures, single- and frame-threaded, every unflagged picture is bit-exact and only flagged
   pictures differ.
 - Vectorised kernels against their straightforward forms on random input: the deblocking edge
   filter against the per-line filter, the 4x4 / 8x8 inverse transforms against the per-column
-  formulation.
+  formulation. 10-bit kernels (clipping to 1023, scaled deblocking thresholds, 4:2:2 chroma DC and
+  intra rules) against hand-computed values.
 
 ### Fixture matrix (all bit-exact, single- and multi-threaded)
 
@@ -158,6 +172,20 @@ encoder is unavailable.
 | no8x8dct | testsrc2+noise 352x288 | 8x8dct=0 |
 | qp50 | testsrc2+noise 352x288 | QP 50 |
 | qp1 | mandelbrot+noise 352x288 | QP 1 |
+| high10_intra | testsrc2+noise 352x288 | High 10 (4:2:0 10-bit), keyint=1 |
+| high10_cavlc_intra | testsrc2+noise 352x288 | High 10, CAVLC, keyint=1 |
+| high10_b | testsrc2+noise 352x288 | High 10, bframes=3, b-pyramid, ref=3 |
+| high10_cavlc_b | mandelbrot+noise 352x288 | High 10, CAVLC, bframes=3, direct=temporal |
+| high10_weightp | testsrc2 fade 352x288 | High 10, weightp=2, weightb |
+| high10_qp1 | mandelbrot+noise 176x144 | High 10, QP 1 (QPY -11) |
+| high10_qp60 | testsrc2+noise 352x288 | High 10, QP 60 |
+| high10_cqm_crop | testsrc2+noise 350x286 | High 10, cqm=jvt, chroma-qp-offset=-3, cropping |
+| high422_intra | testsrc2+noise 352x288 | High 4:2:2 (10-bit), keyint=1 |
+| high422_cavlc_intra | smptehdbars+noise 352x288 | High 4:2:2 10-bit, CAVLC, keyint=1 |
+| high422_b | testsrc2+noise 352x288 | High 4:2:2 10-bit, bframes=3, weightp=2, weightb |
+| high422_cavlc_b | mandelbrot+noise 352x288 | High 4:2:2 10-bit, CAVLC, bframes=3, 8x8 transform |
+| high422_8bit | testsrc2+noise 352x288 | High 4:2:2 at 8 bits, bframes=2 |
+| high422_qp55 | smptehdbars+noise 352x288 | High 4:2:2 10-bit, QP 55 |
 | bench_1080p | testsrc2+noise 1920x1080, 120 frames | preset medium, CRF 20 (8.8 Mbit/s) |
 | vt_baseline | testsrc2+noise 320x240 | Apple VideoToolbox, Baseline (macOS only) |
 | vt_main | mandelbrot+noise 640x360 | VideoToolbox, Main |
@@ -203,21 +231,22 @@ file; `H264_BENCH_ITERS=n` (and `H264_THREADS=t`, `H264_DRAFT=1`) turns it into 
 
 - Interlaced coding (field pictures, PAFF, MBAFF): streams with `frame_mbs_only_flag = 0` return
   `Error::Unsupported`.
-- Only 8-bit 4:2:0. High 10 / 4:2:2 / 4:4:4 / monochrome and lossless
-  (`qpprime_y_zero_transform_bypass`) return `Error::Unsupported`.
+- 4:4:4 (High 4:4:4 Predictive, separate colour planes), monochrome (4:0:0), bit depths above 10,
+  luma and chroma of different depths, and lossless (`qpprime_y_zero_transform_bypass`) return
+  `Error::Unsupported`.
 - FMO (slice groups), SP/SI slices, data partitioning (Extended profile), MVC/SVC NAL units.
 - Error concealment is minimal: undecodable slices leave the prediction/previous content; missing
   references are replaced by other references.
 - No SIMD intrinsics (the hot loops are written to auto-vectorise); CABAC residual decoding is
   inherently serial and now dominates.
 
-### Extending to High 10 and 4:2:2
+### High bit depth and 4:2:2
 
-The chroma format and bit depth are isolated behind `Sps::check_supported`. The parts that are
-format-specific today: `Planes`/`FrameRow` sample type (`u8`; a `u16` variant or a generic sample
-type is needed for bit depths > 8, together with `Clip1` ranges, `QpBdOffset` in the QP
-derivations and the scaled tC0/alpha/beta in deblocking), chroma block geometry (`MbWidthC` /
-`MbHeightC` = 8x8 in `slicedec`, `intra::pred_chroma`, the chroma DC transform and the CABAC/CAVLC
-chroma DC parsing — the 2x4 total_zeros tables and ctxBlockCat 3 `NumC8x8` handling are already in
-place), chroma motion-vector vertical scaling and the chroma deblocking edges (4:2:2 has four
-horizontal chroma edges).
+Reconstruction is generic over the stored sample type (`sample::Sample`: `u8` for 8-bit
+sequences, `u16` for 9 and 10 bits) and monomorphised, so the 8-bit path runs exactly the code it
+did before (same speed). The DPB keeps `AnyFrame` (either type); a sequence of another bit depth or
+chroma format flushes it, and each picture job runs the matching core. 10 bits is the limit
+because the deblocking lanes are `i16` and the chroma interpolation sum is 16-bit
+(64 x 1023 + 32 < 65536). The chroma geometry follows `MbHeightC` (8 or 16) throughout: planes,
+published rows, chroma windows, intra prediction, residual block counts and CABAC / CAVLC
+neighbours.
