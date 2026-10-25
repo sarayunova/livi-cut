@@ -1,0 +1,8 @@
+asset:        background-source.svg
+title:        LiVi Cut macOS DMG window background (source, live text)
+author:       LiVi, after the layout by @XusBadia
+source:       original work (the LiVi Cut symbol on a navy panel; layout after @XusBadia's FilmCraft DMG background)
+license:      MIT OR Apache-2.0
+license-file: LICENSE-MIT, LICENSE-APACHE
+added:        2026-10-25 by Claude (agent) for LiVi
+notes:        Text is set in Inter and JetBrains Mono (OFL-1.1, assets/fonts). generate.py outlines it into background.svg with usvg.

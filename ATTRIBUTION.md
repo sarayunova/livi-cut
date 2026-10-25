@@ -32,24 +32,25 @@ iconography, images or other Adobe assets; open licences only; every asset attri
 | `docs/images/filmcraft-scopes.png` | FilmCraft contributors | Original work: FilmCraft UI crop (scopes of a Charade (1963) frame, public domain) | MIT OR Apache-2.0 |
 | `docs/images/filmcraft-effects.png` | FilmCraft contributors | Original work: FilmCraft screenshot crop; NASA Earth Views (US Government work, public domain) | MIT OR Apache-2.0; footage public domain |
 | `docs/images/filmcraft-timeline.png` | FilmCraft contributors | Original work: FilmCraft UI crop; thumbnails from Night of the Living Dead (1968) and Carnival of Souls (1962), CC0 Chopin waveform | MIT OR Apache-2.0; film frames public domain |
-| `assets/app-icon/filmcraft.svg` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; canonical vector | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `packaging/macos/dmg/background.svg` | @XusBadia | Original work: FilmCraft macOS DMG window background, derived from the FilmCraft app icon (`assets/app-icon/filmcraft.svg`); rendered to `background.tiff` by `packaging/macos/dmg/generate.py` | MIT OR Apache-2.0 (`LICENSE-MIT`, `LICENSE-APACHE`) |
-| `packaging/macos/dmg/background.tiff` | @XusBadia | Rendered from `packaging/macos/dmg/background.svg` by `packaging/macos/dmg/generate.py` | MIT OR Apache-2.0 (`LICENSE-MIT`, `LICENSE-APACHE`) |
-| `assets/app-icon/filmcraft-small.svg` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; lighter vector | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/filmcraft-1024.png` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; 1024 px render | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/filmcraft-macos-512.png` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; macOS runtime Dock icon (512 px) | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/filmcraft.icns` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; macOS .icns | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/filmcraft.ico` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; Windows .ico (16-256 px) | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/hicolor/16x16/apps/ai.storyteller.filmcraft.png` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; Linux hicolor theme 16 px | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/hicolor/24x24/apps/ai.storyteller.filmcraft.png` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; Linux hicolor theme 24 px | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/hicolor/32x32/apps/ai.storyteller.filmcraft.png` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; Linux hicolor theme 32 px | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/hicolor/48x48/apps/ai.storyteller.filmcraft.png` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; Linux hicolor theme 48 px | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/hicolor/64x64/apps/ai.storyteller.filmcraft.png` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; Linux hicolor theme 64 px | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/hicolor/128x128/apps/ai.storyteller.filmcraft.png` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; Linux hicolor theme 128 px | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/hicolor/256x256/apps/ai.storyteller.filmcraft.png` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; Linux hicolor theme 256 px | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/hicolor/512x512/apps/ai.storyteller.filmcraft.png` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; Linux hicolor theme 512 px | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `assets/app-icon/hicolor/scalable/apps/ai.storyteller.filmcraft.svg` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; Linux hicolor theme scalable | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
-| `apps/filmcraft-web/web/favicon.png` | Brandon Thomas (FilmCraft owner) | Original work: FilmCraft app icon (owl with ear tufts), drawn by the owner in ArtCraft and vectorised; 128 px | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) |
+| `assets/app-icon/filmcraft.svg` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `packaging/macos/dmg/background.svg` | LiVi, after the layout by @XusBadia | Original work: LiVi Cut macOS DMG window background with the LiVi Cut symbol; text outlined from `background-source.svg` by `packaging/macos/dmg/generate.py` | MIT OR Apache-2.0 (`LICENSE-MIT`, `LICENSE-APACHE`) |
+| `packaging/macos/dmg/background-source.svg` | LiVi, after the layout by @XusBadia | Original work: source of the LiVi Cut DMG background (live Inter / JetBrains Mono text) | MIT OR Apache-2.0 (`LICENSE-MIT`, `LICENSE-APACHE`) |
+| `packaging/macos/dmg/background.tiff` | LiVi, after the layout by @XusBadia | Rendered from `packaging/macos/dmg/background.svg` by `packaging/macos/dmg/generate.py` | MIT OR Apache-2.0 (`LICENSE-MIT`, `LICENSE-APACHE`) |
+| `assets/app-icon/filmcraft-small.svg` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/filmcraft-1024.png` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/filmcraft-macos-512.png` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/filmcraft.icns` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/filmcraft.ico` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/hicolor/16x16/apps/com.liviverse.livicut.png` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/hicolor/24x24/apps/com.liviverse.livicut.png` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/hicolor/32x32/apps/com.liviverse.livicut.png` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/hicolor/48x48/apps/com.liviverse.livicut.png` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/hicolor/64x64/apps/com.liviverse.livicut.png` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/hicolor/128x128/apps/com.liviverse.livicut.png` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/hicolor/256x256/apps/com.liviverse.livicut.png` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/hicolor/512x512/apps/com.liviverse.livicut.png` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `assets/app-icon/hicolor/scalable/apps/com.liviverse.livicut.svg` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
+| `apps/filmcraft-web/web/favicon.png` | LiVi (LiVi Cut owner) | Original work: LiVi Cut app icon (teal play triangle and coral cut band), redrawn as vector geometry from a concept made for LiVi with ChatGPT image generation | MIT OR Apache-2.0 |
 
 ## Golden test images
 
@@ -134,24 +135,6 @@ carry each font's licence as `OFL-<family>.txt`.
 | Noto Sans Arabic Regular (Google) | Arabic UI text; Arabic fallback for titles (native builds) | OFL-1.1 |
 | Noto Sans Thai Regular (Google) | Thai fallback for titles (native builds) | OFL-1.1 |
 | Noto Sans Georgian Regular (Google) | Georgian fallback for titles (native builds) | OFL-1.1 |
-
-## First-party brand marks
-
-The ArtCraft name, wordmark and logos are trademarks of the ArtCraft Team. They are not open source and
-are not covered by the project licence; they may be used only unmodified and only in the context of
-FilmCraft, under [`docs/brand/LICENSE-brand.txt`](docs/brand/LICENSE-brand.txt). Forks and modified versions must
-remove them (AGENTS.md §1.8).
-
-| File | Author | Source | Licence |
-|---|---|---|---|
-| `docs/brand/artcraft-logo-white.png` | ArtCraft Team | Original work: first-party ArtCraft brand mark (ArtCraft wordmark, light ink for dark backgrounds) | ArtCraft trademark, not open source; `docs/brand/LICENSE-brand.txt` (not MIT/Apache) |
-| `docs/brand/artcraft-logo-white.svg` | ArtCraft Team | Original work: first-party ArtCraft brand mark (ArtCraft wordmark, light ink for dark backgrounds) | ArtCraft trademark, not open source; `docs/brand/LICENSE-brand.txt` (not MIT/Apache) |
-| `docs/brand/artcraft-logo.png` | ArtCraft Team | Original work: first-party ArtCraft brand mark (ArtCraft wordmark (symbol + "ARTCRAFT"), dark ink for light backgrounds) | ArtCraft trademark, not open source; `docs/brand/LICENSE-brand.txt` (not MIT/Apache) |
-| `docs/brand/artcraft-logo.svg` | ArtCraft Team | Original work: first-party ArtCraft brand mark (ArtCraft wordmark (symbol + "ARTCRAFT"), dark ink for light backgrounds) | ArtCraft trademark, not open source; `docs/brand/LICENSE-brand.txt` (not MIT/Apache) |
-| `docs/brand/artcraft-mark-black.png` | ArtCraft Team | Original work: first-party ArtCraft brand mark (ArtCraft symbol ("A" mark), black) | ArtCraft trademark, not open source; `docs/brand/LICENSE-brand.txt` (not MIT/Apache) |
-| `docs/brand/artcraft-mark-black.svg` | ArtCraft Team | Original work: first-party ArtCraft brand mark (ArtCraft symbol ("A" mark), black) | ArtCraft trademark, not open source; `docs/brand/LICENSE-brand.txt` (not MIT/Apache) |
-| `docs/brand/artcraft-mark.png` | ArtCraft Team | Original work: first-party ArtCraft brand mark (ArtCraft symbol ("A" mark), blue) | ArtCraft trademark, not open source; `docs/brand/LICENSE-brand.txt` (not MIT/Apache) |
-| `docs/brand/artcraft-mark.svg` | ArtCraft Team | Original work: first-party ArtCraft brand mark (ArtCraft symbol ("A" mark), blue) | ArtCraft trademark, not open source; `docs/brand/LICENSE-brand.txt` (not MIT/Apache) |
 
 ## Third-party source code
 

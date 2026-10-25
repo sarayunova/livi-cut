@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="400" viewBox="0 0 660 400">
+<!-- Source of background.svg: the same drawing with live text. generate.py outlines the text
+     with usvg (Inter, JetBrains Mono from assets/fonts) so the committed SVG needs no fonts. -->
+<rect width="660" height="400" fill="#f4f1ea"/>
+<rect width="232" height="400" fill="#0f1a2e"/>
+<g transform="translate(-17.0 75.1) scale(0.2)">
+  <path fill="#22cfce" d="M300.0,265.0 C300.0,199.0 346.1,173.2 402.4,207.6 L854.5,483.9 C862.1,488.4 862.1,496.0 854.7,500.7 L308.5,844.7 C303.8,847.6 300.0,845.5 300.0,840.0 Z"/>
+  <path fill="#fd7557" d="M300.0,923.0 C300.0,918.6 303.1,913.2 306.9,910.9 L889.8,563.9 C930.0,540.0 982.4,553.3 1006.3,593.5 L1015.9,609.5 C1039.8,649.7 1025.8,700.9 984.8,723.3 L387.7,1049.8 C339.5,1076.2 300.0,1052.7 300.0,997.7 Z"/>
+</g>
+
+<text x="267" y="72" font-family="Inter" font-weight="600" font-size="28" fill="#0f1a2e">LiVi Cut</text>
+<line x1="267" y1="88.5" x2="624" y2="88.5" stroke="#0f1a2e" stroke-width="0.6"/>
+<path d="M271.5,81.5 L276,88.5 L271.5,95.5 L267,88.5 Z" fill="#22cfce"/>
+<text x="267" y="110" font-family="JetBrains Mono" font-size="8.5" fill="#0f1a2e" fill-opacity="0.7">00:00:24:00 · 24 fps · 3840 × 2160</text>
+
+<rect x="408" y="197" width="13" height="16" rx="1.5" fill="none" stroke="#0f1a2e" stroke-width="1.3" stroke-opacity="0.35"/>
+<rect x="425" y="197" width="13" height="16" rx="1.5" fill="none" stroke="#0f1a2e" stroke-width="1.3" stroke-opacity="0.57"/>
+<rect x="442" y="197" width="13" height="16" rx="1.5" fill="none" stroke="#0f1a2e" stroke-width="1.3" stroke-opacity="0.79"/>
+<rect x="459" y="197" width="13" height="16" rx="1.5" fill="none" stroke="#fd7557" stroke-width="1.3"/>
+<path d="M468,192 L492,205 L468,218 Z" fill="#22cfce"/>
+
+<line x1="267" y1="335.5" x2="624" y2="335.5" stroke="#0f1a2e" stroke-width="0.6"/>
+<text x="267" y="358" font-family="Inter" font-weight="500" font-size="11" letter-spacing="1.1" fill="#0f1a2e" fill-opacity="0.8">DRAG ONTO APPLICATIONS TO INSTALL</text>
+</svg>

@@ -1,8 +1,8 @@
 asset:        filmcraft-1024.png
-title:        FilmCraft app icon, 1024 px render
-author:       Brandon Thomas (FilmCraft owner), for the FilmCraft project
-source:       original work (drawn by the owner in ArtCraft, then vectorised)
+title:        LiVi Cut app icon, 1024 px render
+author:       LiVi (LiVi Cut owner)
+source:       original work (concept image made for LiVi with ChatGPT image generation, redrawn as vector geometry)
 license:      MIT OR Apache-2.0
 license-file: assets/app-icon/LICENSE.txt
-added:        2026-10-02 by Claude (agent) for Brandon Thomas
-notes:        Rendered from filmcraft.svg with resvg by packaging/icons.sh.
+added:        2026-10-25 by Claude (agent) for LiVi
+notes:        Teal play triangle (#22cfce) above a coral cut band (#fd7557) on a navy tile (#0f1a2e); 512 viewBox, rx=112. Redrawn from the owner's concept image as clean geometry; derived files rendered with resvg by packaging/icons.sh (the .icns with Pillow from the same Apple-grid render). See assets/app-icon/README.md.

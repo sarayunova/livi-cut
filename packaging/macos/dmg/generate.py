@@ -24,12 +24,12 @@ from PIL import Image, ImageCms
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # Keep in sync with package.sh (volume name) and README.md (layout).
-VOLUME = "FilmCraft"
+VOLUME = "LiVi Cut"
 WIDTH, HEIGHT = 660, 400  # window content, pt; the background's 1x size
 TITLE_BAR = 32
 ICON_SIZE = 128
 PALETTE = 16  # colours in background.tiff
-ICONS = {"FilmCraft.app": (326, 205), "Applications": (574, 205)}
+ICONS = {"LiVi Cut.app": (326, 205), "Applications": (574, 205)}
 # A fixed date for the alias and the colour profile. Finder never matches it against the image
 # (each build is a new volume): it finds the background by volume name and path.
 FIXED_DATE = datetime.datetime(2026, 10, 8, tzinfo=datetime.timezone.utc)
@@ -147,9 +147,18 @@ def write_ds_store(out):
             d[name]["Iloc"] = pos
 
 
+def outline_text(src, out):
+    # background-source.svg has live text; the committed background.svg has it as paths, drawn
+    # with the repository's own fonts, so rendering it never depends on installed fonts.
+    fonts = os.path.join(HERE, "..", "..", "..", "assets", "fonts")
+    subprocess.run(["usvg", "--skip-system-fonts", "--use-fonts-dir", fonts, src, out], check=True)
+
+
 def main():
-    if not shutil.which("resvg"):
-        sys.exit("error: resvg not found (brew install resvg / cargo install resvg --locked)")
+    for tool, hint in (("resvg", "cargo install resvg --locked"), ("usvg", "cargo install usvg --locked")):
+        if not shutil.which(tool):
+            sys.exit(f"error: {tool} not found (brew install resvg / {hint})")
+    outline_text(os.path.join(HERE, "background-source.svg"), os.path.join(HERE, "background.svg"))
     write_tiff(os.path.join(HERE, "background.svg"), os.path.join(HERE, "background.tiff"))
     write_ds_store(os.path.join(HERE, "dmg-layout.DS_Store"))
 
