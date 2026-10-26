@@ -89,11 +89,18 @@ fn frame_worker_survives_a_panicking_job_and_keeps_rendering() {
     let workers = d.harness.state().frames.workers() as u32;
     // more faults than there are workers: before the fix every worker died and nothing rendered
     filmcraft_ui_egui::frames::inject_job_panics(workers + 2);
-    for t in [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0] {
-        d.ok("engine.execute", json!({"command": "playhead.set", "params": {"seconds": t}}));
+    // Each new position needs a frame not rendered yet: the first jobs take the injected panics,
+    // a later one must render. How many jobs a run of positions makes depends on timing (a slow
+    // machine merges requests), so the positions go on until that has happened, up to 40.
+    let mut st = d.frame_stats();
+    for k in 4..=40 {
+        if st["failedJobs"].as_u64() == Some(workers as u64 + 2) && st["jobs"].as_u64().unwrap_or(0) > jobs_before {
+            break;
+        }
+        d.ok("engine.execute", json!({"command": "playhead.set", "params": {"seconds": f64::from(k) * 0.25}}));
         d.settle();
+        st = d.frame_stats();
     }
-    let st = d.frame_stats();
     assert_eq!(st["failedJobs"].as_u64(), Some(workers as u64 + 2), "{st}");
     let done_after_faults = st["jobs"].as_u64().unwrap_or(0);
     assert!(done_after_faults > jobs_before, "workers still finish jobs after the panics: {st}");
