@@ -59,7 +59,9 @@ let availability = filmcraft_platform::register(); // Available("VideoToolbox") 
     Microsoft's VP9 decoder sometimes skips a picture without an error while the GPU is busy; since
     pictures come out in the order they go in, a later picture overtaking one still in flight
     shows it, and the decoder fails so `HybridDecoder` replays the run in software
-    (`media_foundation::dropped_pictures` counts them). A sample holding only a hidden VP9 frame is
+    (`media_foundation::dropped_pictures` counts them). While flushing, the decoder still returns
+    the pictures it holds and reports the loss through `VideoDecoder::take_flush_losses`;
+    `HybridDecoder` then replays the run in software for the missing ones. A sample holding only a hidden VP9 frame is
     not waited for (`vp9::shows_picture`).
   - `mfplat.dll` is loaded at run time (`mft.rs`), not linked: Windows "N" editions without the Media
     Feature Pack still start FilmCraft, which then decodes in software.

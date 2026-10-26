@@ -148,6 +148,8 @@ pub struct MfDecoder {
     /// Test hook: fail every decode once this many samples were fed.
     fail_after: Option<u64>,
     fed: u64,
+    /// Pictures the last flush lost ([`VideoDecoder::take_flush_losses`]).
+    flush_losses: usize,
     name: &'static str,
     timings: Timings,
 }
@@ -183,6 +185,7 @@ impl MfDecoder {
             drained: false,
             fail_after: None,
             fed: 0,
+            flush_losses: 0,
             timings: Timings::default(),
         })
     }
@@ -234,8 +237,11 @@ impl MfDecoder {
         }
     }
 
-    /// Take every picture the decoder has ready (presentation order).
-    fn collect(&mut self, out: &mut Vec<DecodedFrame>) -> std::result::Result<(), String> {
+    /// Take every picture the decoder has ready (presentation order). A picture overtaken by a
+    /// later one was dropped: while decoding that is an error (the hybrid decoder replays the run in
+    /// software); while `draining`, the pictures still held are taken and the loss is counted in
+    /// `flush_losses`, which the hybrid decoder asks for after the flush.
+    fn collect(&mut self, out: &mut Vec<DecodedFrame>, draining: bool) -> std::result::Result<(), String> {
         for _ in 0..MAX_OUTPUTS_PER_CALL {
             let Some(mft) = self.mft.as_ref() else { return Ok(()) };
             match mft.poll()? {
@@ -243,12 +249,19 @@ impl MfDecoder {
                 Poll::FormatChanged => self.size_checked = false,
                 Poll::Frame(sample, t) => {
                     if let Some(skipped) = self.skipped_before(t) {
-                        // forget the dropped pictures and this one (not returned either), so a
-                        // flush after the error does not count them again
                         let before = self.in_flight.len();
-                        self.in_flight.retain(|&p| p > t);
-                        DROPPED.fetch_add(before.saturating_sub(self.in_flight.len() + 1) as u64, Ordering::Relaxed);
-                        return Err(format!("the decoder dropped the picture at {skipped}"));
+                        if draining {
+                            self.in_flight.retain(|&p| p >= t);
+                            let lost = before.saturating_sub(self.in_flight.len());
+                            DROPPED.fetch_add(lost as u64, Ordering::Relaxed);
+                            self.flush_losses = self.flush_losses.saturating_add(lost);
+                        } else {
+                            // forget the dropped pictures and this one (not returned either), so
+                            // a flush after the error does not count them again
+                            self.in_flight.retain(|&p| p > t);
+                            DROPPED.fetch_add(before.saturating_sub(self.in_flight.len() + 1) as u64, Ordering::Relaxed);
+                            return Err(format!("the decoder dropped the picture at {skipped}"));
+                        }
                     }
                     if !self.size_checked {
                         self.check_size()?;
@@ -282,7 +295,7 @@ impl MfDecoder {
                     self.in_flight.push(pts);
                 }
                 self.need_headers = false;
-                self.collect(&mut out)?;
+                self.collect(&mut out, false)?;
                 // a decoder holds back a DPB's worth of pictures at most
                 if self.in_flight.len() > MAX_IN_FLIGHT {
                     return Err(format!("the decoder holds {} pictures back", self.in_flight.len()));
@@ -290,7 +303,7 @@ impl MfDecoder {
                 return Ok(out);
             }
             // full: take what it has ready, then offer the sample again
-            self.collect(&mut out)?;
+            self.collect(&mut out, false)?;
             if attempt == 1 {
                 break;
             }
@@ -359,19 +372,27 @@ impl VideoDecoder for MfDecoder {
         if gpu::ensure_com().is_err() {
             return out;
         }
-        let drained = self.mft.as_ref().map(Mft::drain).transpose().and_then(|_| self.collect(&mut out));
+        self.flush_losses = 0;
+        let drained = self.mft.as_ref().map(Mft::drain).transpose().and_then(|_| self.collect(&mut out, true));
         if let Err(e) = drained {
             log::warn!("{}: {e} while flushing", self.name);
         } else if matches!(self.stream, Stream::Frame(_)) && !self.in_flight.is_empty() {
             // drained, yet some pictures never came out
             DROPPED.fetch_add(self.in_flight.len() as u64, Ordering::Relaxed);
-            log::warn!("{}: the decoder dropped {} pictures at the end of the run", self.name, self.in_flight.len());
+            self.flush_losses = self.flush_losses.saturating_add(self.in_flight.len());
+        }
+        if self.flush_losses > 0 {
+            log::warn!("{}: the decoder dropped {} pictures while flushing", self.name, self.flush_losses);
         }
         self.in_flight.clear();
         // what follows a drain starts like a new run: the decoder is given the headers again
         self.need_headers = true;
         self.drained = true;
         out
+    }
+
+    fn take_flush_losses(&mut self) -> usize {
+        std::mem::take(&mut self.flush_losses)
     }
 
     fn reset(&mut self) {
