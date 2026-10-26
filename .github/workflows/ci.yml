@@ -77,5 +77,7 @@ jobs:
         run: cargo xtask ci
 
       # A gate that changed Cargo.lock ran against a lockfile that is not the one in the repository.
+      # The committed lockfile has CRLF line endings and Cargo rewrites it with LF on Linux, which
+      # changes no dependency, so line endings are ignored.
       - name: Lockfile unchanged
-        run: git diff --exit-code -- Cargo.lock
+        run: git diff --exit-code --ignore-cr-at-eol -- Cargo.lock
