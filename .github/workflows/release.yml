@@ -76,6 +76,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      # Same craft-fonts commit in ci.yml and release.yml. Without it the build embeds no CJK or
+      # Indic fallback fonts and the UI tests that type Japanese panic on a runner with none installed.
+      - name: Fetch craft-fonts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --quiet https://github.com/storytold/craft-fonts "$RUNNER_TEMP/craft-fonts"
+          git -C "$RUNNER_TEMP/craft-fonts" checkout --quiet b076417b5880bd4154bd22f00695b1d28c6bea83
+          echo "CRAFT_FONTS_DIR=$RUNNER_TEMP/craft-fonts" >> "$GITHUB_ENV"
+          echo "CRAFT_FONTS_REQUIRED=1" >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
         with:
           toolchain: stable
@@ -111,6 +122,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      # Same craft-fonts commit in ci.yml and release.yml. Without it the build embeds no CJK or
+      # Indic fallback fonts and the UI tests that type Japanese panic on a runner with none installed.
+      - name: Fetch craft-fonts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --quiet https://github.com/storytold/craft-fonts "$RUNNER_TEMP/craft-fonts"
+          git -C "$RUNNER_TEMP/craft-fonts" checkout --quiet b076417b5880bd4154bd22f00695b1d28c6bea83
+          echo "CRAFT_FONTS_DIR=$RUNNER_TEMP/craft-fonts" >> "$GITHUB_ENV"
+          echo "CRAFT_FONTS_REQUIRED=1" >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
         with:
           toolchain: stable
@@ -153,6 +175,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      # Same craft-fonts commit in ci.yml and release.yml. Without it the build embeds no CJK or
+      # Indic fallback fonts and the UI tests that type Japanese panic on a runner with none installed.
+      - name: Fetch craft-fonts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --quiet https://github.com/storytold/craft-fonts "$RUNNER_TEMP/craft-fonts"
+          git -C "$RUNNER_TEMP/craft-fonts" checkout --quiet b076417b5880bd4154bd22f00695b1d28c6bea83
+          echo "CRAFT_FONTS_DIR=$RUNNER_TEMP/craft-fonts" >> "$GITHUB_ENV"
+          echo "CRAFT_FONTS_REQUIRED=1" >> "$GITHUB_ENV"
       - name: Install build and packaging tools
         env:
           DEB_ARCH: ${{ matrix.deb }}
@@ -250,6 +283,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      # Same craft-fonts commit in ci.yml and release.yml. Without it the build embeds no CJK or
+      # Indic fallback fonts and the UI tests that type Japanese panic on a runner with none installed.
+      - name: Fetch craft-fonts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --quiet https://github.com/storytold/craft-fonts "$RUNNER_TEMP/craft-fonts"
+          git -C "$RUNNER_TEMP/craft-fonts" checkout --quiet b076417b5880bd4154bd22f00695b1d28c6bea83
+          echo "CRAFT_FONTS_DIR=$RUNNER_TEMP/craft-fonts" >> "$GITHUB_ENV"
+          echo "CRAFT_FONTS_REQUIRED=1" >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
         with:
           toolchain: stable

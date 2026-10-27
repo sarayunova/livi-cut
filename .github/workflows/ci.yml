@@ -32,6 +32,17 @@ jobs:
         with:
           persist-credentials: false
 
+      # Same craft-fonts commit in ci.yml and release.yml. Without it the build embeds no CJK or
+      # Indic fallback fonts and the UI tests that type Japanese panic on a runner with none installed.
+      - name: Fetch craft-fonts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --quiet https://github.com/storytold/craft-fonts "$RUNNER_TEMP/craft-fonts"
+          git -C "$RUNNER_TEMP/craft-fonts" checkout --quiet b076417b5880bd4154bd22f00695b1d28c6bea83
+          echo "CRAFT_FONTS_DIR=$RUNNER_TEMP/craft-fonts" >> "$GITHUB_ENV"
+          echo "CRAFT_FONTS_REQUIRED=1" >> "$GITHUB_ENV"
+
       # Nothing waits on it: the space is free before the build needs it.
       - name: Free disk space
         run: |
