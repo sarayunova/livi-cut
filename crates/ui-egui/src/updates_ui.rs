@@ -7,6 +7,10 @@ use crate::FilmcraftApp;
 #[cfg(not(target_arch = "wasm32"))]
 use craft_update::updater::{Action, Status, Updater};
 
+/// LiVi Cut's own release feed: the GitHub Releases of this repository, in the `livi-cut-<version>-<os>-<arch>` asset names the packaging scripts write.
+#[cfg(not(target_arch = "wasm32"))]
+const LIVI_CUT: craft_update::App = craft_update::App::new("livi-cut", "LiVi Cut", "Video editing, color and sound", "sarayunova/livi-cut");
+
 pub(crate) struct Runtime {
     #[cfg(not(target_arch = "wasm32"))]
     updater: Updater,
@@ -26,7 +30,7 @@ impl Default for Runtime {
     fn default() -> Self {
         Self {
             #[cfg(not(target_arch = "wasm32"))]
-            updater: Updater::new(&craft_update::suite::FILMCRAFT, env!("CARGO_PKG_VERSION")),
+            updater: Updater::new(&LIVI_CUT, env!("CARGO_PKG_VERSION")),
             #[cfg(not(target_arch = "wasm32"))]
             startup_check: false,
             #[cfg(not(target_arch = "wasm32"))]
@@ -96,7 +100,7 @@ pub(crate) fn show(app: &mut FilmcraftApp, ctx: &egui::Context) {
             Status::Idle => (false, None),
             Status::Checking => (true, Some(tl!("Checking for updates…").to_string())),
             Status::UpToDate => {
-                (true, Some(tl!("FilmCraft {version} is currently the newest version available.").replace("{version}", env!("CARGO_PKG_VERSION"))))
+                (true, Some(tl!("LiVi Cut {version} is currently the newest version available.").replace("{version}", env!("CARGO_PKG_VERSION"))))
             }
             Status::Failed(e) => (true, Some(tl!("Could not check for updates:\n{error}").replace("{error}", e))),
         };
@@ -104,7 +108,7 @@ pub(crate) fn show(app: &mut FilmcraftApp, ctx: &egui::Context) {
 
     if app.updates_rt.manual_window_open {
         let mut open = true;
-        egui::Window::new(crate::i18n::t("FilmCraft Updates"))
+        egui::Window::new(crate::i18n::t("LiVi Cut Updates"))
             .open(&mut open)
             .collapsible(false)
             .resizable(false)

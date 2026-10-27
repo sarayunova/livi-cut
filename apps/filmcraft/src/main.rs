@@ -254,8 +254,7 @@ fn app_creator(launch: Launch, graphics: graphics::GraphicsStart, created: Arc<A
             }
         }
         let mut app = FilmcraftApp::new(session);
-        // LiVi Cut has no release feed of its own yet: craft_update points at FilmCraft's releases.
-        app.set_startup_update_check(false);
+        app.set_startup_update_check(true);
         app.graphics_notice = notice;
         if recover == Some(false) {
             app.dialog = None;

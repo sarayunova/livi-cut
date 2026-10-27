@@ -37,6 +37,7 @@ pub fn menu_hint(command: &str) -> Option<String> {
             "help.revealLogFiles" => tl!("Saves this session's log and shows it in your file manager."),
             "help.systemCompatibilityReport" => tl!("Shows a report on this computer."),
             "app.about" => tl!("Shows the version, community links and credits in a LiVi Cut window."),
+            "app.checkForUpdates" => tl!("Looks for a newer LiVi Cut release and offers to update."),
             _ => return None,
         }
         .to_string(),
