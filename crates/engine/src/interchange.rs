@@ -1,7 +1,5 @@
 //! Interchange documents (CMX 3600 EDL, FCP7 XML, FCPXML, OTIO, AAF, OMF) ↔ the session's project.
 
-use std::path::Path;
-
 use serde_json::{Value, json};
 
 use filmcraft_interchange::{ExportOptions, Format, ImportOptions};
@@ -26,21 +24,23 @@ fn is_file_media(item: &filmcraft_project::ProjectItem) -> bool {
     matches!(&item.kind, ItemKind::Media(m) if matches!(m.media, MediaRef::File { .. }))
 }
 
-/// Write embedded audio without replacing an occupied path; return the path used.
+/// Write embedded audio without replacing an occupied path; return the path used. A numbered
+/// name changes only the file name: the folder keeps its separators as written (`/` or `\`).
 fn write_embedded_audio(s: &Session, path: &str, wav: &[u8]) -> Result<String> {
-    // Only the file name changes: the directory part is kept as written, so a virtual `/files/...`
-    // path keeps its `/` on Windows (`Path::with_file_name` would join with `\`).
-    let dir_len = path.rfind(['/', '\\']).map_or(0, |i| i + 1);
-    let (dir, file) = path.split_at(dir_len);
-    let file = Path::new(file);
-    let stem = file.file_stem().ok_or_else(|| EngineError::Other(format!("{path}: missing audio file name")))?.to_string_lossy();
-    let extension = file.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
+    let (folder, name) = path.split_at(path.rfind(['/', '\\']).map_or(0, |i| i + 1));
+    if matches!(name, "" | "." | "..") {
+        return Err(EngineError::Other(format!("{path}: missing audio file name")));
+    }
+    let (stem, extension) = match name.rfind('.') {
+        Some(i) if i > 0 => name.split_at(i),
+        _ => (name, ""),
+    };
     for number in 1..=1_000 {
-        let candidate_text = if number == 1 { path.to_owned() } else { format!("{dir}{stem} ({number}){extension}") };
-        match s.services.write_file_new(&candidate_text, wav) {
-            Ok(()) => return Ok(candidate_text),
+        let candidate = if number == 1 { path.to_owned() } else { format!("{folder}{stem} ({number}){extension}") };
+        match s.services.write_file_new(&candidate, wav) {
+            Ok(()) => return Ok(candidate),
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
-            Err(e) => return Err(EngineError::Other(format!("{candidate_text}: {e}"))),
+            Err(e) => return Err(EngineError::Other(format!("{candidate}: {e}"))),
         }
     }
     Err(EngineError::Other(format!("{path}: no unused embedded-audio filename after 1000 attempts")))
@@ -75,6 +75,11 @@ pub fn import(s: &mut Session, path: &str, bytes: &[u8], format: Format) -> Resu
         }
         _ => filmcraft_interchange::import_with(bytes, format, &opts).map_err(|e| EngineError::Other(format!("{path}: {e}")))?,
     };
+    for item in fragment.project.items.values() {
+        if let ItemKind::Sequence(sequence) = &item.kind {
+            sequence.settings.validate().map_err(|e| EngineError::Other(format!("{path}: invalid imported sequence settings: {e}")))?;
+        }
+    }
     let before: std::collections::HashSet<ItemId> = s.project.items.keys().copied().collect();
     let name = opts.name.clone().unwrap_or_else(|| format.name().to_string());
     let seqs = s.edit(&format!("Import {name}"), |proj, _| {
@@ -228,12 +233,14 @@ mod embedded_audio_tests {
     }
 
     #[test]
-    fn extraction_keeps_backslash_separators() {
-        let files = Arc::new(VirtualFiles::default());
-        files.0.lock().unwrap().insert(r"C:\media\cut Audio.wav".into(), b"first".to_vec());
-        let session = Session::new(files.clone());
-        let path = write_embedded_audio(&session, r"C:\media\cut Audio.wav", b"new audio").unwrap();
-        assert_eq!(path, r"C:\media\cut Audio (2).wav");
-        assert_eq!(files.0.lock().unwrap()[r"C:\media\cut Audio (2).wav"], b"new audio");
+    fn numbered_names_keep_the_path_separators() {
+        for path in ["C:/files/cut Audio.wav", "C:\\files\\cut Audio.wav"] {
+            let files = Arc::new(VirtualFiles::default());
+            files.0.lock().unwrap().insert(path.into(), b"first".to_vec());
+            let session = Session::new(files.clone());
+            let numbered = write_embedded_audio(&session, path, b"new audio").unwrap();
+            assert_eq!(numbered, path.replace("cut Audio.wav", "cut Audio (2).wav"));
+            assert_eq!(files.0.lock().unwrap()[path], b"first");
+        }
     }
 }

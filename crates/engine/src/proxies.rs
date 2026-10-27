@@ -97,7 +97,13 @@ pub fn transcode(
     preset: &Preset,
     progress: &Progress,
 ) -> std::result::Result<Report, String> {
-    transcode_with_file(clip, name, src, range, out, None, preset, progress)
+    transcode_with_file(clip, name, src, range, Dest { path: out, file: None }, preset, progress)
+}
+
+/// Output path, plus the already-open file to write into when the caller holds one.
+struct Dest<'a> {
+    path: &'a str,
+    file: Option<Arc<std::fs::File>>,
 }
 
 fn transcode_with_file(
@@ -105,11 +111,11 @@ fn transcode_with_file(
     name: &str,
     src: SharedSource,
     range: Option<TimeRange>,
-    out: &str,
-    output_file: Option<Arc<std::fs::File>>,
+    dest: Dest<'_>,
     preset: &Preset,
     progress: &Progress,
 ) -> std::result::Result<Report, String> {
+    let Dest { path: out, file: output_file } = dest;
     let info = &clip.info;
     let rate = clip.frame_rate();
     let mut st = SequenceSettings::default();
@@ -280,7 +286,7 @@ fn start_job(s: &mut Session, label: String, work: Vec<(ItemId, ReservedOutput, 
             }
             *prog.status.lock().unwrap_or_else(|e| e.into_inner()) = format!("{name} ({} of {n})", k + 1);
             let out = output.path().to_string_lossy().into_owned();
-            match transcode_with_file(&clip, &name, src, None, &out, output.file(), pr, &prog) {
+            match transcode_with_file(&clip, &name, src, None, Dest { path: &out, file: output.file() }, pr, &prog) {
                 Ok(r) => {
                     bytes += r.bytes;
                     output.preserve();
@@ -508,13 +514,24 @@ pub fn ingest(s: &mut Session, items: &[ItemId]) -> Result<Value> {
     if !ing.enabled || items.is_empty() {
         return Ok(Value::Null);
     }
+    // Ingest settings travel in a project file. A destination only becomes active after this
+    // machine has chosen it, or when it is safely inside the project folder.
+    let destination = ing
+        .destination
+        .as_deref()
+        .filter(|d| !d.is_empty())
+        .and_then(|d| crate::project_tools::trusted_scratch(Some(d), s.path.as_deref(), &s.prefs.auto_save.scratch_folders));
+    if ing.destination.as_deref().is_some_and(|d| !d.is_empty()) && destination.is_none() {
+        s.toast("Ingest: ignoring an untrusted project destination; choose it locally in Ingest Settings to enable copying.");
+        return Ok(json!({"skipped": "untrusted ingest destination"}));
+    }
     let mut copied = Vec::new();
     let copy = matches!(ing.action, IngestAction::Copy | IngestAction::CopyAndCreateProxies);
     if copy {
         for &i in items {
             let Some((_, path, _)) = media_path(&s.project, i) else { continue };
-            let dir = match &ing.destination {
-                Some(d) if !d.is_empty() => PathBuf::from(d),
+            let dir = match &destination {
+                Some(d) => d.clone(),
                 _ => Path::new(&path).parent().unwrap_or(Path::new(".")).join("Ingested Media"),
             };
             if Path::new(&path).file_name().is_some_and(|name| Path::new(&path) == dir.join(name)) {
@@ -527,7 +544,7 @@ pub fn ingest(s: &mut Session, items: &[ItemId]) -> Result<Value> {
     let mut job = Value::Null;
     match ing.action {
         IngestAction::CreateProxies | IngestAction::CopyAndCreateProxies => {
-            let p = json!({"items": items.iter().map(|i| i.0).collect::<Vec<_>>(), "preset": if ing.preset.is_empty() { DEFAULT_PROXY_PRESET } else { ing.preset.as_str() }, "destination": ing.destination});
+            let p = json!({"items": items.iter().map(|i| i.0).collect::<Vec<_>>(), "preset": if ing.preset.is_empty() { DEFAULT_PROXY_PRESET } else { ing.preset.as_str() }, "destination": destination.as_ref().map(|d| d.to_string_lossy().into_owned())});
             if items.iter().any(|i| s.project.item(*i).and_then(|x| x.as_media()).is_some_and(|m| m.info.video.is_some() && m.info.kind == MediaKind::Movie)) {
                 job = create(s, &p)?;
             }
@@ -542,8 +559,8 @@ pub fn ingest(s: &mut Session, items: &[ItemId]) -> Result<Value> {
                 if clip.info.video.is_none() {
                     continue;
                 }
-                let dir = match &ing.destination {
-                    Some(d) if !d.is_empty() => PathBuf::from(d),
+                let dir = match &destination {
+                    Some(d) => d.clone(),
                     _ => Path::new(&path).parent().unwrap_or(Path::new(".")).join("Ingested Media"),
                 };
                 let stem = Path::new(&path).file_stem().map(|n| n.to_string_lossy().into_owned()).unwrap_or(name);
@@ -680,6 +697,9 @@ pub fn commands() -> Vec<CommandSpec> {
                 }
                 if let Some(d) = p.get("destination") {
                     ing.destination = d.as_str().filter(|d| !d.is_empty()).map(str::to_string);
+                    if let Some(d) = ing.destination.as_ref() {
+                        crate::project_tools::remember_scratch_folders(s, std::slice::from_ref(d));
+                    }
                 }
                 if let Some(pr) = str_p(p, "preset") {
                     if !pr.is_empty() && preset(pr).is_none() {

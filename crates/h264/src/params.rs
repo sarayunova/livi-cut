@@ -4,6 +4,10 @@ use crate::error::{Result, ensure, unsupported};
 use crate::tables::*;
 use filmcraft_bitstream::BitReader;
 
+/// Maximum supported reconstructed luma area. 8K UHD fits comfortably while
+/// hostile SPS dimensions cannot allocate full pictures and decoder work state.
+const MAX_LUMA_SAMPLES: u64 = 1 << 25;
+
 /// Scaling matrices after applying fall-back rules, stored in raster order (weightScale).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ScalingMatrices {
@@ -518,6 +522,9 @@ impl Sps {
     /// Whether the software decoder handles this sequence: progressive, 4:2:0 or 4:2:2, luma and
     /// chroma of the same bit depth from 8 to 10, no lossless macroblocks.
     pub fn check_supported(&self) -> Result<()> {
+        if u64::from(self.width()).saturating_mul(u64::from(self.height())) > MAX_LUMA_SAMPLES {
+            return unsupported("picture dimensions exceed the decoder memory limit");
+        }
         if !self.frame_mbs_only {
             return unsupported("interlaced (field / MBAFF) coding");
         }

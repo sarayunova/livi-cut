@@ -1,4 +1,4 @@
-//! Draft decoding of VP9, HEVC and AV1 through the media stack (as `h264_draft.rs` for H.264):
+//! Draft decoding of H.264, VP9, HEVC and AV1 through the media stack:
 //! off by default, approximate frames only reach draft requests, and decoding for an export after
 //! draft playback (same source, same GOP cache) still matches ffmpeg bit for bit.
 
@@ -51,7 +51,7 @@ fn check(name: &str, args: &[&str], w: usize, h: usize) {
 /// not alongside `h264_draft`).
 #[test]
 fn draft_playback_never_reaches_exports() {
-    let _stats = draft_stats_lock();
+    crate::h264_draft::check();
     vp9();
     hevc();
     av1();
